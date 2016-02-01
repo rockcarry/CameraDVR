@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal" >
+
+    <FrameLayout
+    	android:id="@+id/camera_preview"
+    	android:layout_width="match_parent"
+    	android:layout_height="match_parent"
+    	android:layout_gravity="center"
+    	android:layout_weight="1.0" >
+
+       <SurfaceView
+    	    android:id="@+id/camera_preview_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <View
+            android:id="@+id/view_flash_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#ffffffff"
+            android:visibility="gone"
+            android:alpha="0" />
+
+        <RelativeLayout
+            android:id="@+id/view_camera_videoui"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent" >
+
+            <TextView android:id="@+id/text_recording_time"
+                android:gravity="center"
+                android:layout_alignParentRight="true"
+                android:layout_marginTop="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawableLeft="@drawable/ic_recording_indicator_1"
+                android:drawablePadding="5dp"
+                android:textSize="22dp"
+                android:textColor="#ffeeeeee"
+                android:background="@drawable/roundrect"
+                android:visibility="gone" />
+
+            <com.apical.cdr.widget.ShutterButton
+                android:id="@+id/btn_startstop_record"
+                android:src="@drawable/btn_new_shutter_recording"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true" />
+        </RelativeLayout>
+    </FrameLayout>
+
+</LinearLayout>
