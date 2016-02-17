@@ -44,7 +44,7 @@ public class RecordService extends Service implements
     private SurfaceHolder   mHolder      = null;
     private SurfaceView     mSurViewNull = null;
     private String          mCurVideoFile= null;
-    private LocationManager mLocManager  = null;
+    private LocationMonitor mLocManager  = null;
     private SdcardManager   mSdManager   = null;
     private Handler         mHandler     = new Handler();
     private boolean         mTakePhotoInProgress = false;
@@ -60,7 +60,7 @@ public class RecordService extends Service implements
         mSurViewNull = new SurfaceView(this);
 
         // location manager
-        mLocManager = new LocationManager(this, new LocationManager.Listener() {
+        mLocManager = new LocationMonitor(this, new LocationMonitor.Listener() {
             @Override
             public void showGpsOnScreenIndicator(boolean hasSignal) {
             }

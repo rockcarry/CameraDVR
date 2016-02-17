@@ -18,6 +18,7 @@ package com.apical.cdr;
 
 import android.content.Context;
 import android.location.Location;
+import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.os.Bundle;
 import android.util.Log;
@@ -25,12 +26,12 @@ import android.util.Log;
 /**
  * A class that handles everything about location.
  */
-public class LocationManager {
+public class LocationMonitor {
     private static final String TAG = "LocationManager";
 
     private Context mContext;
     private Listener mListener;
-    private android.location.LocationManager mLocationManager;
+    private LocationManager mLocationManager;
     private boolean mRecordLocation;
 
     LocationListener [] mLocationListeners = new LocationListener[] {
@@ -44,7 +45,7 @@ public class LocationManager {
         public void onGpsSpeedChanged(float speed);
    }
 
-    public LocationManager(Context context, Listener listener) {
+    public LocationMonitor(Context context, Listener listener) {
         mContext = context;
         mListener = listener;
     }
