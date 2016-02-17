@@ -125,137 +125,141 @@ public class RecordService extends Service implements
     }
 
     public class RecordBinder extends Binder {
-        public boolean isRecording() {
-            return mRecording;
+        public RecordService getService() {
+            return RecordService.this;
+        }
+    }
+
+    public boolean startRecording() {
+        if (mRecording) return mRecording;
+
+        try {
+            mCamDev.unlock();
+            mRecorder.setCamera(mCamDev);
+            mRecorder.setPreviewDisplay(null);
+
+            mRecorder.setAudioSource (MediaRecorder.AudioSource.CAMCORDER); 
+            mRecorder.setVideoSource (MediaRecorder.VideoSource.CAMERA);
+            mRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+
+            mRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+            mRecorder.setVideoSize(CAMERA_VIDEO_WIDTH, CAMERA_VIDEO_HEIGHT);
+            mRecorder.setVideoFrameRate(CAMERA_VIDEO_FRATE);
+            mRecorder.setVideoEncodingBitRate(RECORD_VIDEO_BITRATE);
+
+            mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+            mRecorder.setAudioChannels(CAMERA_AUDIO_CHNUM);
+            mRecorder.setAudioSamplingRate(CAMERA_AUDIO_SRATE);
+            mRecorder.setAudioEncodingBitRate(RECORD_AUDIO_BITRATE);
+
+            mCurVideoFile = getNewRecordFileName();
+            mRecorder.setMaxDuration(RECORD_MAX_DURATION);
+            mRecorder.setOutputFile(mCurVideoFile);
+            mRecorder.setOnErrorListener(RecordService.this);
+            mRecorder.setOnInfoListener (RecordService.this);
+            mRecorder.prepare();
+            mRecorder.start();
+            mRecording = true;
+            mRecordingStartTime = System.currentTimeMillis();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        public boolean startRecording() {
-            if (mRecording) return mRecording;
+        return mRecording;
+    }
 
-            try {
-                mCamDev.unlock();
-                mRecorder.setCamera(mCamDev);
-                mRecorder.setPreviewDisplay(null);
+    public void stopRecording() {
+        if (!mRecording) return;
 
-                mRecorder.setAudioSource (MediaRecorder.AudioSource.CAMCORDER); 
-                mRecorder.setVideoSource (MediaRecorder.VideoSource.CAMERA);
-                mRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+        // stop & release recorder, then lock camdev
+        mRecorder.setOnErrorListener(null);
+        mRecorder.setOnInfoListener (null);
+        mRecorder.stop();
+        mRecorder.release();
+        mCamDev  .lock();
 
-                mRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-                mRecorder.setVideoSize(CAMERA_VIDEO_WIDTH, CAMERA_VIDEO_HEIGHT);
-                mRecorder.setVideoFrameRate(CAMERA_VIDEO_FRATE);
-                mRecorder.setVideoEncodingBitRate(RECORD_VIDEO_BITRATE);
+        // add video to media saver
+        mMediaSaver.addVideo(mCurVideoFile, CAMERA_VIDEO_WIDTH, CAMERA_VIDEO_HEIGHT);
 
-                mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-                mRecorder.setAudioChannels(CAMERA_AUDIO_CHNUM);
-                mRecorder.setAudioSamplingRate(CAMERA_AUDIO_SRATE);
-                mRecorder.setAudioEncodingBitRate(RECORD_AUDIO_BITRATE);
+        // re-create a new recorder for next recordnig
+        mRecorder  = new MediaRecorder();
+        mRecording = false;
+    }
 
-                mCurVideoFile = getNewRecordFileName();
-                mRecorder.setMaxDuration(RECORD_MAX_DURATION);
-                mRecorder.setOutputFile(mCurVideoFile);
-                mRecorder.setOnErrorListener(RecordService.this);
-                mRecorder.setOnInfoListener (RecordService.this);
-                mRecorder.prepare();
-                mRecorder.start();
-                mRecording = true;
-                mRecordingStartTime = System.currentTimeMillis();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+    public boolean isRecording() {
+        return mRecording;
+    }
 
-            return mRecording;
+    public int getRecordingMaxDuration() {
+        return RECORD_MAX_DURATION;
+    }
+
+    public long getRecordingStartTime() {
+        return mRecordingStartTime;
+    }
+
+    public void takePhoto(Camera.ShutterCallback sc) {
+        if (mTakePhotoInProgress) return;
+
+        mTakePhotoInProgress = true;
+        mCamDev.takePicture(sc, null,
+            new Camera.PictureCallback() {
+                @Override
+                public void onPictureTaken(byte[] data, Camera cam) {
+                    Log.d(TAG, "takePhoto onPictureTaken");
+                    Location      loc  = mLocManager.getCurrentLocation();
+                    ExifInterface exif = Exif.getExif(data);
+                    int    orientation = Exif.getOrientation(exif);
+
+                    mMediaSaver.addImage(data,
+                        getNewPhotoFileName(), System.currentTimeMillis(),
+                        loc, 0, 0, orientation, exif);
+
+                    mTakePhotoInProgress = false;
+                }
+            });
+    }
+
+    public void setPreviewSurfaceHolder(SurfaceHolder holder) {
+        if (holder == null) {
+            holder = mSurViewNull.getHolder();
+        }
+        else {
+            mHolder = holder;
+        }
+        try {
+            mCamDev.stopPreview();
+            mCamDev.setPreviewDisplay(holder);
+            mCamDev.startPreview();
+
+            //++ enable watermark
+            SystemProperties.set("sys.watermark.pos", "22-22");
+            mHandler.postDelayed(mWaterMarkUpdater, 50);
+            //-- enable watermark
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void selectCamera(int n) {
+        if (mCamDev != null) {
+            mCamDev.stopPreview();
+            mCamDev.release();
         }
 
-        public void stopRecording() {
-            if (!mRecording) return;
-
-            // stop & release recorder, then lock camdev
-            mRecorder.setOnErrorListener(null);
-            mRecorder.setOnInfoListener (null);
-            mRecorder.stop();
-            mRecorder.release();
-            mCamDev  .lock();
-
-            // add video to media saver
-            mMediaSaver.addVideo(mCurVideoFile, CAMERA_VIDEO_WIDTH, CAMERA_VIDEO_HEIGHT);
-
-            // re-create a new recorder for next recordnig
-            mRecorder  = new MediaRecorder();
-            mRecording = false;
+        switch (n) {
+        case 0:
+            mCamDev = Camera.open(0);
+            break;
+        case 1:
+            mCamDev = Camera.open(1);
+            break;
         }
 
-        public int getRecordingMaxDuration() {
-            return RECORD_MAX_DURATION;
-        }
-
-        public long getRecordingStartTime() {
-            return mRecordingStartTime;
-        }
-
-        public void takePhoto(Camera.ShutterCallback sc) {
-            if (mTakePhotoInProgress) return;
-
-            mTakePhotoInProgress = true;
-            mCamDev.takePicture(sc, null,
-                new Camera.PictureCallback() {
-                    @Override
-                    public void onPictureTaken(byte[] data, Camera cam) {
-                        Log.d(TAG, "takePhoto onPictureTaken");
-                        Location      loc  = mLocManager.getCurrentLocation();
-                        ExifInterface exif = Exif.getExif(data);
-                        int    orientation = Exif.getOrientation(exif);
-
-                        mMediaSaver.addImage(data,
-                            getNewPhotoFileName(), System.currentTimeMillis(),
-                            loc, 0, 0, orientation, exif);
-
-                        mTakePhotoInProgress = false;
-                    }
-                });
-        }
-
-        public void setPreviewSurfaceHolder(SurfaceHolder holder) {
-            if (holder == null) {
-                holder = mSurViewNull.getHolder();
-            }
-            else {
-                mHolder = holder;
-            }
-            try {
-                mCamDev.stopPreview();
-                mCamDev.setPreviewDisplay(holder);
-                mCamDev.startPreview();
-
-                //++ enable watermark
-                SystemProperties.set("sys.watermark.pos", "22-22");
-                mHandler.postDelayed(mWaterMarkUpdater, 50);
-                //-- enable watermark
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        public void selectCamera(int n) {
-            if (mCamDev != null) {
-                mCamDev.stopPreview();
-                mCamDev.release();
-            }
-
-            switch (n) {
-            case 0:
-                mCamDev = Camera.open(0);
-                break;
-            case 1:
-                mCamDev = Camera.open(1);
-                break;
-            }
-
-            Camera.Parameters params = mCamDev.getParameters();
-            params .setPreviewSize(CAMERA_VIDEO_WIDTH, CAMERA_VIDEO_HEIGHT);
-            mCamDev.setParameters(params);
-            setPreviewSurfaceHolder(mHolder);
-        }
+        Camera.Parameters params = mCamDev.getParameters();
+        params .setPreviewSize(CAMERA_VIDEO_WIDTH, CAMERA_VIDEO_HEIGHT);
+        mCamDev.setParameters(params);
+        setPreviewSurfaceHolder(mHolder);
     }
 
     public static String getNewRecordFileName() {
@@ -285,8 +289,8 @@ public class RecordService extends Service implements
         Log.d(TAG, "onInfo what = " + what + ", extra = " + extra);
         if (what == MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED) {
             mRecordingStartTime = Long.MAX_VALUE;
-            mBinder.stopRecording ();
-            mBinder.startRecording();
+            stopRecording ();
+            startRecording();
         }
     }
 

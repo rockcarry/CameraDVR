@@ -41,11 +41,11 @@ public class CameraActivity extends Activity
     private PowerManager.WakeLock mWakeLock;
     Handler mHandler = new Handler();
 
-    private RecordService.RecordBinder mRecServ = null;
+    private RecordService mRecServ = null;
     private ServiceConnection mRecServiceConn = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder serv) {
-            mRecServ = (RecordService.RecordBinder)serv;
+            mRecServ = ((RecordService.RecordBinder)serv).getService();
             mRecServ.selectCamera(mCurrentCamera);
             mRecServ.setPreviewSurfaceHolder(mPreview.getHolder());
         }
