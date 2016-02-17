@@ -144,9 +144,9 @@ public class CameraActivity extends Activity
                 if (SdcardManager.isSdcardInsert()){
                     if (mRecServ.startRecording()) {
                         mWakeLock.acquire(); // acquire wake lock
+                        mHandler.post(mRecordingTimeUpdater);
                         mBtnShutter.setImageResource(R.drawable.btn_new_shutter_recording);
                         mTxtRecTime.setVisibility(View.VISIBLE);
-                        mHandler.postDelayed(mRecordingTimeUpdater, 50);
                     }
                 }
                 else {
@@ -224,10 +224,11 @@ public class CameraActivity extends Activity
             mHandler.postDelayed(this, 1000);
 
             SimpleDateFormat f = new SimpleDateFormat("mm:ss");
-            long time = System.currentTimeMillis() - mRecServ.getRecordingStart();
-            if (time > 0) {
-                mTxtRecTime.setText(f.format(time - TimeZone.getDefault().getRawOffset()));
+            long time = System.currentTimeMillis() - mRecServ.getRecordingStartTime();
+            if (time < 0 || time > mRecServ.getRecordingMaxDuration()) {
+                time = 0;
             }
+            mTxtRecTime.setText(f.format(time - TimeZone.getDefault().getRawOffset()));
             mTxtRecTime.setCompoundDrawablesWithIntrinsicBounds(
                 blink ? R.drawable.ic_recording_indicator_0 : R.drawable.ic_recording_indicator_1, 0, 0, 0);
             blink = !blink;

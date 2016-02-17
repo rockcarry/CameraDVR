@@ -185,7 +185,11 @@ public class RecordService extends Service implements
             mRecording = false;
         }
 
-        public long getRecordingStart() {
+        public int getRecordingMaxDuration() {
+            return RECORD_MAX_DURATION;
+        }
+
+        public long getRecordingStartTime() {
             return mRecordingStartTime;
         }
 
