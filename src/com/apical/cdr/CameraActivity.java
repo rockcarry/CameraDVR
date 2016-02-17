@@ -23,10 +23,10 @@ import com.apical.cdr.widget.ShutterButton;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 
-public class CameraTestActivity extends Activity
+public class CameraActivity extends Activity
     implements View.OnClickListener, View.OnLongClickListener
 {
-    private static final String TAG = "CameraTestActivity";
+    private static final String TAG = "CameraActivity";
     private static final String CAMERA_TEST_APP_SHARED_PREFS = "CAMERA_TEST_APP_SHARED_PREFS";
     private static final String CAMERA_TEST_APP_CURRENT_CAM  = "CAMERA_TEST_APP_CURRENT_CAM";
 
@@ -78,7 +78,7 @@ public class CameraTestActivity extends Activity
         mBtnShutter.setOnClickListener(this);
 
         // start record service
-        Intent i = new Intent(CameraTestActivity.this, RecordService.class);
+        Intent i = new Intent(CameraActivity.this, RecordService.class);
         startService(i);
 
         // bind record service
@@ -106,7 +106,7 @@ public class CameraTestActivity extends Activity
         unbindService(mRecServiceConn);
 
         // stop record service
-        Intent i = new Intent(CameraTestActivity.this, RecordService.class);
+        Intent i = new Intent(CameraActivity.this, RecordService.class);
         stopService(i);
 
         // for wake lock
