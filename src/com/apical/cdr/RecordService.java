@@ -44,7 +44,8 @@ public class RecordService extends Service implements
     private SurfaceHolder   mHolder      = null;
     private SurfaceView     mSurViewNull = null;
     private String          mCurVideoFile= null;
-    private LocationMonitor mLocManager  = null;
+    private GSensorMonitor  mGSensorMon  = null;
+    private LocationMonitor mLocationMon = null;
     private SdcardManager   mSdManager   = null;
     private Handler         mHandler     = new Handler();
     private boolean         mTakePhotoInProgress = false;
@@ -59,8 +60,17 @@ public class RecordService extends Service implements
         mMediaSaver  = new MediaSaver (this);
         mSurViewNull = new SurfaceView(this);
 
-        // location manager
-        mLocManager = new LocationMonitor(this, new LocationMonitor.Listener() {
+        // gsensor monitor
+        mGSensorMon = new GSensorMonitor(this, new GSensorMonitor.Listener() {
+            @Override
+            public void onGsensorImpactEvent() {
+            }
+        });
+        // start gsensor monitor
+        mGSensorMon.start();
+
+        // location monitor
+        mLocationMon = new LocationMonitor(this, new LocationMonitor.Listener() {
             @Override
             public void showGpsOnScreenIndicator(boolean hasSignal) {
             }
@@ -72,7 +82,7 @@ public class RecordService extends Service implements
             }
         });
         // start location monitor
-        mLocManager.recordLocation(true);
+        mLocationMon.recordLocation(true);
 
         // sdcard manager
         mSdManager = new SdcardManager(this, mMediaSaver, new SdcardManager.SDStateChangeListener() {
@@ -109,7 +119,10 @@ public class RecordService extends Service implements
         mSdManager.stopDiskRecycle();
 
         // stop location monitor
-        mLocManager.recordLocation(false);
+        mLocationMon.recordLocation(false);
+
+        // stop gsensor monitor
+        mGSensorMon.stop();
     }
 
     @Override
@@ -207,7 +220,7 @@ public class RecordService extends Service implements
                 @Override
                 public void onPictureTaken(byte[] data, Camera cam) {
                     Log.d(TAG, "takePhoto onPictureTaken");
-                    Location      loc  = mLocManager.getCurrentLocation();
+                    Location      loc  = mLocationMon.getCurrentLocation();
                     ExifInterface exif = Exif.getExif(data);
                     int    orientation = Exif.getOrientation(exif);
 

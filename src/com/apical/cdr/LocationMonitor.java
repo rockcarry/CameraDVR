@@ -27,7 +27,7 @@ import android.util.Log;
  * A class that handles everything about location.
  */
 public class LocationMonitor {
-    private static final String TAG = "LocationManager";
+    private static final String TAG = "LocationMonitor";
 
     private Context mContext;
     private Listener mListener;
@@ -43,7 +43,7 @@ public class LocationMonitor {
         public void showGpsOnScreenIndicator(boolean hasSignal);
         public void hideGpsOnScreenIndicator();
         public void onGpsSpeedChanged(float speed);
-   }
+    }
 
     public LocationMonitor(Context context, Listener listener) {
         mContext = context;
