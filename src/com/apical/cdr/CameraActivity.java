@@ -5,7 +5,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -27,10 +26,7 @@ public class CameraActivity extends Activity
     implements View.OnClickListener, View.OnLongClickListener
 {
     private static final String TAG = "CameraActivity";
-    private static final String CAMERA_TEST_APP_SHARED_PREFS = "CAMERA_TEST_APP_SHARED_PREFS";
-    private static final String CAMERA_TEST_APP_CURRENT_CAM  = "CAMERA_TEST_APP_CURRENT_CAM";
 
-    private SharedPreferences mSharedPref;
     private int            mCurrentCamera;
     private SurfaceView    mPreview;
     private View           mFlashView;
@@ -63,8 +59,8 @@ public class CameraActivity extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-        mSharedPref     = getSharedPreferences(CAMERA_TEST_APP_SHARED_PREFS, MODE_PRIVATE);
-        mCurrentCamera  = mSharedPref.getInt(CAMERA_TEST_APP_CURRENT_CAM , 0);
+        // init settings
+        Settings.init(this);
 
         mPreview = (SurfaceView)findViewById(R.id.camera_preview_view);
         mPreview.getHolder().addCallback(mPreviewSurfaceHolderCallback);

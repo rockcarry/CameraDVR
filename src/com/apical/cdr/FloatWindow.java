@@ -47,8 +47,8 @@ public class FloatWindow {
         mLayoutParams.format  = PixelFormat.RGBA_8888;
         mLayoutParams.flags   = LayoutParams.FLAG_NOT_FOCUSABLE;
         mLayoutParams.gravity = Gravity.LEFT | Gravity.TOP;
-        mLayoutParams.x       = 0;
-        mLayoutParams.y       = 0;
+        mLayoutParams.x       = Settings.get(Settings.KEY_FLOAT_BTN_POS_X, Settings.DEF_FLOAT_BTN_POS_X);
+        mLayoutParams.y       = Settings.get(Settings.KEY_FLOAT_BTN_POS_Y, Settings.DEF_FLOAT_BTN_POS_Y);
         mLayoutParams.width   = WindowManager.LayoutParams.WRAP_CONTENT;
         mLayoutParams.height  = WindowManager.LayoutParams.WRAP_CONTENT;
 
@@ -85,6 +85,11 @@ public class FloatWindow {
                         mLayoutParams.x = x - mFloatLayout.getMeasuredWidth () / 2;
                         mLayoutParams.y = y - mFloatLayout.getMeasuredHeight() / 2 - 25;
                         mWinMan.updateViewLayout(mFloatLayout, mLayoutParams);
+
+                        if (Settings.get(Settings.KEY_FLOAT_BTN_POS_SAVE, Settings.DEF_FLOAT_BTN_POS_SAVE) != 0) {
+                            Settings.set(Settings.KEY_FLOAT_BTN_POS_X, mLayoutParams.x);
+                            Settings.set(Settings.KEY_FLOAT_BTN_POS_Y, mLayoutParams.y);
+                        }
                     }
                     break;
                 }
