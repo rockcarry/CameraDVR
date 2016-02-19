@@ -225,15 +225,14 @@ class DiskRecycleThread extends Thread
             long avail   = SdcardManager.getAvailableSpace();
             long recycle = SdcardManager.LOW_STORAGE_THRESHOLD_BYTES - avail;
             Log.d(TAG, "===ck=== avail = " + avail + ", recycle = " + recycle);
-            if (avail < 0) {
-                continue;
-            }
 
-            recycle = recycleDirectorySpace(SdcardManager.DIRECTORY_VIDEO, recycle, SdcardManager.DVR_VIDEO_KEEP_NUM, 0);
-            recycle = recycleDirectorySpace(SdcardManager.DIRECTORY_IMPTT, recycle, SdcardManager.DVR_IMPTT_KEEP_NUM, 0);
-            recycle = recycleDirectorySpace(SdcardManager.DIRECTORY_PHOTO, recycle, SdcardManager.DVR_PHOTO_KEEP_NUM, 1);
-            if (recycle > 0) {
-                Log.e(TAG, "===ck=== recycle disk space failed: " + recycle);
+            if (avail >= 0) {
+                recycle = recycleDirectorySpace(SdcardManager.DIRECTORY_VIDEO, recycle, SdcardManager.DVR_VIDEO_KEEP_NUM, 0);
+                recycle = recycleDirectorySpace(SdcardManager.DIRECTORY_IMPTT, recycle, SdcardManager.DVR_IMPTT_KEEP_NUM, 0);
+                recycle = recycleDirectorySpace(SdcardManager.DIRECTORY_PHOTO, recycle, SdcardManager.DVR_PHOTO_KEEP_NUM, 1);
+                if (recycle > 0) {
+                    Log.e(TAG, "===ck=== recycle disk space failed: " + recycle);
+                }
             }
 
             try {
