@@ -47,7 +47,9 @@ public class RecordService extends Service implements
     private GSensorMonitor  mGSensorMon  = null;
     private LocationMonitor mLocationMon = null;
     private SdcardManager   mSdManager   = null;
+    private FloatWindow     mFloatWin    = null;
     private Handler         mHandler     = new Handler();
+    private CameraActivity  mActivity    = null;
     private boolean         mTakePhotoInProgress = false;
     private long            mRecordingStartTime  = Long.MAX_VALUE;
 
@@ -85,19 +87,28 @@ public class RecordService extends Service implements
         mLocationMon.recordLocation(true);
 
         // sdcard manager
-        mSdManager = new SdcardManager(this, mMediaSaver, new SdcardManager.SDStateChangeListener() {
+        mSdManager = new SdcardManager(this, mMediaSaver, new SdcardManager.SdStateChangeListener() {
             @Override
-            public void onSDStateChanged(boolean insert) {
+            public void onSdStateChanged(boolean insert) {
+                if (mActivity != null) {
+                    mActivity.onSdStateChanged(insert);
+                }
             }
         });
         // start sd state monitor & disk recycler
         mSdManager.startSdStateMonitor();
         mSdManager.startDiskRecycle();
+
+        // float window
+        mFloatWin = new FloatWindow(this);
     }
 
     @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy");
+
+        // hide float window
+        mFloatWin.hideFloat();
 
         // remove watermark updater
         mHandler.removeCallbacks(mWaterMarkUpdater);
@@ -138,7 +149,8 @@ public class RecordService extends Service implements
     }
 
     public class RecordBinder extends Binder {
-        public RecordService getService() {
+        public RecordService getService(CameraActivity activity) {
+            mActivity = activity;
             return RecordService.this;
         }
     }
@@ -178,6 +190,9 @@ public class RecordService extends Service implements
             e.printStackTrace();
         }
 
+        // update float window
+        mFloatWin.updateFloat(mRecording);
+
         return mRecording;
     }
 
@@ -197,6 +212,9 @@ public class RecordService extends Service implements
         // re-create a new recorder for next recordnig
         mRecorder  = new MediaRecorder();
         mRecording = false;
+
+        // update float window
+        mFloatWin.updateFloat(mRecording);
     }
 
     public boolean isRecording() {
@@ -295,6 +313,14 @@ public class RecordService extends Service implements
         Date date = new Date(System.currentTimeMillis());
         SimpleDateFormat df = new SimpleDateFormat("'IMG'_yyyyMMdd_HHmmss");
         return SdcardManager.DIRECTORY_PHOTO + "/" + df.format(date) + ".jpg";
+    }
+
+    public void onResume() {
+        mFloatWin.hideFloat();
+    }
+
+    public void onPause() {
+        mFloatWin.showFloat(mRecording);
     }
 
     @Override

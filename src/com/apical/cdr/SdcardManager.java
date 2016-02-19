@@ -42,9 +42,9 @@ public class SdcardManager {
     private DiskRecycleThread mRecycleThread = null;
     private Context           mContext       = null;
     private MediaSaver        mMediaSaver    = null;
-    private SDStateChangeListener mListerner = null;
+    private SdStateChangeListener mListerner = null;
 
-    public SdcardManager(Context c, MediaSaver ms, SDStateChangeListener l) {
+    public SdcardManager(Context c, MediaSaver ms, SdStateChangeListener l) {
         mContext    = c;
         mMediaSaver = ms;
         mListerner  = l;
@@ -64,8 +64,8 @@ public class SdcardManager {
         }
     }
 
-    public interface SDStateChangeListener {
-        public void onSDStateChanged(boolean insert);
+    public interface SdStateChangeListener {
+        public void onSdStateChanged(boolean insert);
     };
 
     public void startSdStateMonitor() {
@@ -190,13 +190,13 @@ public class SdcardManager {
                 Log.i(TAG, "Intent.ACTION_MEDIA_EJECT path = " + path);
                 if (path.equals(DVR_SD_ROOT)) {
                     Log.i(TAG, "sdcard removed");
-                    if (mListerner != null) mListerner.onSDStateChanged(false);
+                    if (mListerner != null) mListerner.onSdStateChanged(false);
                 }
             } else if (action.equals(Intent.ACTION_MEDIA_MOUNTED)) {
                 Log.i(TAG, "Intent.ACTION_MEDIA_MOUNTED = " + path);
                 if (path.equals(DVR_SD_ROOT)) {
                     Log.i(TAG, "sdcard inserted");
-                    if (mListerner != null) mListerner.onSDStateChanged(true);
+                    if (mListerner != null) mListerner.onSdStateChanged(true);
                 }
             }
         }

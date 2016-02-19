@@ -45,7 +45,7 @@ public class CameraActivity extends Activity
     private ServiceConnection mRecServiceConn = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder serv) {
-            mRecServ = ((RecordService.RecordBinder)serv).getService();
+            mRecServ = ((RecordService.RecordBinder)serv).getService(CameraActivity.this);
             mRecServ.selectCamera(mCurrentCamera);
             mRecServ.setPreviewSurfaceHolder(mPreview.getHolder());
         }
@@ -129,37 +129,28 @@ public class CameraActivity extends Activity
         else {
             mBtnShutter.setImageResource(R.drawable.btn_new_shutter_video);
         }
+
+        if (mRecServ != null) {
+            mRecServ.onResume();
+        }
+
+        showUIControls(true );
+        showUIControls(false);
     }
 
     @Override
     public void onPause() {
         super.onPause();
+        if (mRecServ != null) {
+            mRecServ.onPause();
+        }
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
         case R.id.btn_startstop_record:
-            if (!mRecServ.isRecording()) {
-                if (SdcardManager.isSdcardInsert()){
-                    if (mRecServ.startRecording()) {
-                        mWakeLock.acquire(); // acquire wake lock
-                        mHandler.post(mRecordingTimeUpdater);
-                        mBtnShutter.setImageResource(R.drawable.btn_new_shutter_recording);
-                        mTxtRecTime.setVisibility(View.VISIBLE);
-                    }
-                }
-                else {
-                    // todo..
-                }
-            }
-            else {
-                mHandler.removeCallbacks(mRecordingTimeUpdater);
-                mTxtRecTime.setVisibility(View.GONE);
-                mRecServ.stopRecording();
-                mBtnShutter.setImageResource(R.drawable.btn_new_shutter_video);
-                mWakeLock.release(); // release wake lock
-            }
+            startRecording(!mRecServ.isRecording());
             break;
         }
     }
@@ -191,6 +182,33 @@ public class CameraActivity extends Activity
             showUIControls(false);
         }
         return super.dispatchTouchEvent(ev);
+    }
+
+    public void onSdStateChanged(boolean insert) {
+        startRecording(insert);
+    }
+
+    private void startRecording(boolean start) {
+        if (start) {
+            if (SdcardManager.isSdcardInsert()){
+                if (mRecServ.startRecording()) {
+                    mWakeLock.acquire(); // acquire wake lock
+                    mHandler.post(mRecordingTimeUpdater);
+                    mBtnShutter.setImageResource(R.drawable.btn_new_shutter_recording);
+                    mTxtRecTime.setVisibility(View.VISIBLE);
+                }
+            }
+            else {
+                // todo..
+            }
+        }
+        else {
+            mHandler.removeCallbacks(mRecordingTimeUpdater);
+            mTxtRecTime.setVisibility(View.GONE);
+            mRecServ.stopRecording();
+            mBtnShutter.setImageResource(R.drawable.btn_new_shutter_video);
+            mWakeLock.release(); // release wake lock
+        }
     }
 
     private SurfaceHolder.Callback mPreviewSurfaceHolderCallback = new SurfaceHolder.Callback() {
