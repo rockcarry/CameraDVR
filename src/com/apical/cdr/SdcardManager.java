@@ -33,10 +33,10 @@ public class SdcardManager {
     public static final String DIRECTORY_DCIM      = DVR_SD_ROOT    + "/DCIM";
     public static final String DIRECTORY_PHOTO     = DIRECTORY_DCIM + "/DVR_Photo";
     public static final String DIRECTORY_VIDEO     = DIRECTORY_DCIM + "/DVR_Video";
-    public static final String DIRECTORY_IMPTT     = DIRECTORY_DCIM + "/DVR_Important";
+    public static final String DIRECTORY_IMPACT    = DIRECTORY_DCIM + "/DVR_Impact";
     public static final int    DVR_PHOTO_KEEP_NUM  = 100;
     public static final int    DVR_VIDEO_KEEP_NUM  = 10;
-    public static final int    DVR_IMPTT_KEEP_NUM  = 10;
+    public static final int    DVR_IMPACT_KEEP_NUM = 10;
 
     // disk recycle thread
     private DiskRecycleThread mRecycleThread = null;
@@ -179,6 +179,15 @@ public class SdcardManager {
         return -1;
     }
 
+    public static void makeCdrDirs() {
+        File dir_dcim  = new File(DIRECTORY_DCIM  );
+        File dir_video = new File(DIRECTORY_VIDEO );
+        File dir_impact= new File(DIRECTORY_IMPACT);
+        if (!dir_dcim  .exists()) dir_dcim  .mkdirs();
+        if (!dir_video .exists()) dir_video .mkdirs();
+        if (!dir_impact.exists()) dir_impact.mkdirs();
+    }
+
     private BroadcastReceiver mMediaChangeReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -216,10 +225,7 @@ class DiskRecycleThread extends Thread
 
     @Override
     public void run() {
-        File dir_dcim  = new File(SdcardManager.DIRECTORY_DCIM );
-        File dir_video = new File(SdcardManager.DIRECTORY_VIDEO);
-        if (!dir_dcim .exists()) dir_dcim .mkdirs();
-        if (!dir_video.exists()) dir_video.mkdirs();
+        SdcardManager.makeCdrDirs(); // make cdr dirs
 
         while (!mStopCheck) {
             long avail   = SdcardManager.getAvailableSpace();
@@ -227,9 +233,9 @@ class DiskRecycleThread extends Thread
             Log.d(TAG, "===ck=== avail = " + avail + ", recycle = " + recycle);
 
             if (avail >= 0) {
-                recycle = recycleDirectorySpace(SdcardManager.DIRECTORY_VIDEO, recycle, SdcardManager.DVR_VIDEO_KEEP_NUM, 0);
-                recycle = recycleDirectorySpace(SdcardManager.DIRECTORY_IMPTT, recycle, SdcardManager.DVR_IMPTT_KEEP_NUM, 0);
-                recycle = recycleDirectorySpace(SdcardManager.DIRECTORY_PHOTO, recycle, SdcardManager.DVR_PHOTO_KEEP_NUM, 1);
+                recycle = recycleDirectorySpace(SdcardManager.DIRECTORY_VIDEO , recycle, SdcardManager.DVR_VIDEO_KEEP_NUM , 0);
+                recycle = recycleDirectorySpace(SdcardManager.DIRECTORY_IMPACT, recycle, SdcardManager.DVR_IMPACT_KEEP_NUM, 0);
+                recycle = recycleDirectorySpace(SdcardManager.DIRECTORY_PHOTO , recycle, SdcardManager.DVR_PHOTO_KEEP_NUM , 1);
                 if (recycle > 0) {
                     Log.e(TAG, "===ck=== recycle disk space failed: " + recycle);
                 }

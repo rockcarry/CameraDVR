@@ -13,6 +13,7 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.util.Log;
@@ -23,7 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 
 public class CameraActivity extends Activity
-    implements View.OnClickListener, View.OnLongClickListener
+    implements View.OnClickListener, View.OnLongClickListener, SdcardManager.SdStateChangeListener
 {
     private static final String TAG = "CameraActivity";
 
@@ -33,6 +34,7 @@ public class CameraActivity extends Activity
     private RelativeLayout mCamVideoUI;
     private ShutterButton  mBtnShutter;
     private TextView       mTxtRecTime;
+    private ImageView      mImpactLock;
     private AnimationManager   mAnimManager;
     private PowerManager.WakeLock mWakeLock;
     Handler mHandler = new Handler();
@@ -69,6 +71,7 @@ public class CameraActivity extends Activity
         mCamVideoUI = (RelativeLayout)findViewById(R.id.view_camera_videoui);
         mBtnShutter = (ShutterButton)findViewById(R.id.btn_startstop_record);
         mTxtRecTime = (TextView)findViewById(R.id.text_recording_time);
+        mImpactLock = (ImageView)findViewById(R.id.ic_impact_lock);
 
         mCamVideoUI.setOnLongClickListener(this);
         mBtnShutter.setOnClickListener(this);
@@ -171,7 +174,7 @@ public class CameraActivity extends Activity
         return false;
     }
 
-    @Override  
+    @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         if (ev.getActionMasked() == MotionEvent.ACTION_DOWN) {
             showUIControls(true );
@@ -180,8 +183,19 @@ public class CameraActivity extends Activity
         return super.dispatchTouchEvent(ev);
     }
 
+    @Override
     public void onSdStateChanged(boolean insert) {
         startRecording(insert);
+    }
+
+    public void updateImpactLockView() {
+        boolean impact = mRecServ.getMediaSaver().getGsensorImpactFlag();
+        if (mRecServ.isRecording() && impact) {
+            mImpactLock.setVisibility(View.VISIBLE);
+        }
+        else {
+            mImpactLock.setVisibility(View.GONE);
+        }
     }
 
     private void startRecording(boolean start) {
@@ -205,6 +219,7 @@ public class CameraActivity extends Activity
             mBtnShutter.setImageResource(R.drawable.btn_new_shutter_video);
             mWakeLock.release(); // release wake lock
         }
+        updateImpactLockView();
     }
 
     private SurfaceHolder.Callback mPreviewSurfaceHolderCallback = new SurfaceHolder.Callback() {

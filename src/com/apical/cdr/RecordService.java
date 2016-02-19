@@ -59,15 +59,11 @@ public class RecordService extends Service implements
 
         mBinder      = new RecordBinder ();
         mRecorder    = new MediaRecorder();
-        mMediaSaver  = new MediaSaver (this);
+        mMediaSaver  = new MediaSaver (this, mGSensorImpactListener);
         mSurViewNull = new SurfaceView(this);
 
         // gsensor monitor
-        mGSensorMon = new GSensorMonitor(this, new GSensorMonitor.Listener() {
-            @Override
-            public void onGsensorImpactEvent() {
-            }
-        });
+        mGSensorMon = new GSensorMonitor(this, mGSensorImpactListener);
         // start gsensor monitor
         mGSensorMon.start();
 
@@ -296,10 +292,7 @@ public class RecordService extends Service implements
     }
 
     public static String getNewRecordFileName() {
-        File dir_dcim  = new File(SdcardManager.DIRECTORY_DCIM );
-        File dir_video = new File(SdcardManager.DIRECTORY_VIDEO);
-        if (!dir_dcim .exists()) dir_dcim .mkdirs();
-        if (!dir_video.exists()) dir_video.mkdirs();
+        SdcardManager.makeCdrDirs(); // make cdr dirs
 
         Date date = new Date(System.currentTimeMillis());
         SimpleDateFormat df = new SimpleDateFormat("'VID'_yyyyMMdd_HHmmss");
@@ -307,10 +300,7 @@ public class RecordService extends Service implements
     }
 
     public static String getNewPhotoFileName() {
-        File dir_dcim  = new File(SdcardManager.DIRECTORY_DCIM );
-        File dir_photo = new File(SdcardManager.DIRECTORY_PHOTO);
-        if (!dir_dcim .exists()) dir_dcim .mkdirs();
-        if (!dir_photo.exists()) dir_photo.mkdirs();
+        SdcardManager.makeCdrDirs(); // make cdr dirs
 
         Date date = new Date(System.currentTimeMillis());
         SimpleDateFormat df = new SimpleDateFormat("'IMG'_yyyyMMdd_HHmmss");
@@ -323,6 +313,10 @@ public class RecordService extends Service implements
 
     public void onPause() {
         mFloatWin.showFloat(mRecording);
+    }
+
+    public MediaSaver getMediaSaver() {
+        return mMediaSaver;
     }
 
     @Override
@@ -347,6 +341,20 @@ public class RecordService extends Service implements
             Date date = new Date(System.currentTimeMillis());
             SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss|- - -");
             SystemProperties.set("sys.watermark.msg", df.format(date));
+        }
+    };
+
+    GSensorMonitor.ImpactListener mGSensorImpactListener = new GSensorMonitor.ImpactListener() {
+        @Override
+        public void onGsensorImpactStart() {
+            mMediaSaver.setGsensorImpactFlag(true);
+            mActivity.updateImpactLockView();
+        }
+
+        @Override
+        public void onGsensorImpactDone() {
+            mMediaSaver.setGsensorImpactFlag(false);
+            mActivity.updateImpactLockView();
         }
     };
 }

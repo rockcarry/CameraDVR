@@ -45,12 +45,26 @@ public class MediaSaver {
     private static final int SAVE_TASK_MEMORY_LIMIT = 20 * 1024 * 1024;
 
     /** Memory used by the total queued save request, in bytes. */
-    private long mMemoryUse;
+    private long mMemoryUse = 0;
 
-    ContentResolver mResolver = null;
+    // for media save
+    private ContentResolver mResolver = null;
 
-    public MediaSaver(Context context) {
+    // impact flag & listener
+    private boolean                       mImpactFlag     = false;
+    private GSensorMonitor.ImpactListener mImpactListener = null;
+
+    public MediaSaver(Context context, GSensorMonitor.ImpactListener l) {
         mResolver = context.getContentResolver();
+        mImpactListener = l;
+    }
+
+    public void setGsensorImpactFlag(boolean f) {
+        mImpactFlag = f;
+    }
+
+    public boolean getGsensorImpactFlag() {
+        return mImpactFlag;
     }
 
     public void addImage(final byte[] data, String path, long date, Location loc, int width,
@@ -206,6 +220,16 @@ public class MediaSaver {
             ContentValues values = null;
             Uri           uri    = null;
             try {
+                if (mImpactFlag) {
+                    String pathold = path;
+                    String pathnew = path.replace("DVR_Video", "DVR_Impact");
+                    File fileold = new File(pathold);
+                    File filenew = new File(pathnew);
+                    fileold.renameTo(filenew);
+                    path = pathnew;
+                    mImpactListener.onGsensorImpactDone();
+                }
+
                 values = new ContentValues();
                 values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4");
                 values.put(MediaStore.Video.Media.DATA, path);

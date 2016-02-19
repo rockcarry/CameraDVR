@@ -43,6 +43,15 @@
                 android:background="@drawable/roundrect"
                 android:visibility="gone" />
 
+            <ImageView
+                android:id="@+id/ic_impact_lock"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical ="true"
+                android:src="@drawable/ic_impact_lock" />
+
             <com.apical.cdr.widget.ShutterButton
                 android:id="@+id/btn_startstop_record"
                 android:src="@drawable/btn_new_shutter_recording"

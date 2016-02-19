@@ -11,15 +11,16 @@ public class GSensorMonitor {
     private static final String TAG = "GSensorMonitor";
     private static final float IMPACT_AA_LEVEL = 256;
 
-    private SensorManager mSensorManager;
-    private Context  mContext;
-    private Listener mListener;
+    private SensorManager  mSensorManager;
+    private Context        mContext;
+    private ImpactListener mListener;
 
-    public interface Listener {
-        public void onGsensorImpactEvent();
+    public interface ImpactListener {
+        public void onGsensorImpactStart();
+        public void onGsensorImpactDone ();
     }
 
-    public GSensorMonitor(Context context, Listener listener) {
+    public GSensorMonitor(Context context, ImpactListener listener) {
         mSensorManager = (SensorManager)context.getSystemService(Context.SENSOR_SERVICE);
         mContext = context;
         mListener = listener;
@@ -45,7 +46,7 @@ public class GSensorMonitor {
 //              Log.d(TAG, "x = " + x + ", y = " + y + ", z = " + z + ", aa = " + aa);
                 if (aa > IMPACT_AA_LEVEL) {
                     if (mListener != null) {
-                        mListener.onGsensorImpactEvent();
+                        mListener.onGsensorImpactStart();
                     }
                 }
             }
