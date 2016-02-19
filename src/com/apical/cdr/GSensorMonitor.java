@@ -42,7 +42,7 @@ public class GSensorMonitor {
                 float y = sensorEvent.values[1];
                 float z = sensorEvent.values[2];
                 float aa= x * x + y * y + z * z;
-                Log.d(TAG, "x = " + x + ", y = " + y + ", z = " + z + ", aa = " + aa);
+//              Log.d(TAG, "x = " + x + ", y = " + y + ", z = " + z + ", aa = " + aa);
                 if (aa > IMPACT_AA_LEVEL) {
                     if (mListener != null) {
                         mListener.onGsensorImpactEvent();

@@ -1,9 +1,12 @@
 package com.apical.cdr;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.PixelFormat;
+import android.os.Handler;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -28,7 +31,10 @@ public class FloatWindow {
     private int           mLastFloatPosX = -1;
     private int           mLastFloatPosY = -1;
     private boolean       mMoveFloatFlag = false;
-    private int           cdr_btn_state  = 0;
+    private int           mCdrBtnState   = 0;
+    private boolean       mRecording     = false;
+    private boolean       mIsScreenOn    = true;
+    private Handler       mHandler       = new Handler();
 
     public FloatWindow(Context context) {
         mContext     = context;
@@ -52,7 +58,7 @@ public class FloatWindow {
                 boolean ret = false;
                 switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
-                    switch (cdr_btn_state) {
+                    switch (mCdrBtnState) {
                     case 1: mCdrButton.setBackgroundResource(R.drawable.cdr_float_btn_normal_1); break;
                     case 2: mCdrButton.setBackgroundResource(R.drawable.cdr_float_btn_record_1); break;
                     }
@@ -61,7 +67,7 @@ public class FloatWindow {
                     mMoveFloatFlag = false;
                     break;
                 case MotionEvent.ACTION_UP:
-                    switch (cdr_btn_state) {
+                    switch (mCdrBtnState) {
                     case 1: mCdrButton.setBackgroundResource(R.drawable.cdr_float_btn_normal_0); break;
                     case 2: mCdrButton.setBackgroundResource(R.drawable.cdr_float_btn_record_0); break;
                     }
@@ -98,33 +104,73 @@ public class FloatWindow {
         });
     }
 
+    public void create() {
+        // register system event receiver
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_SCREEN_ON );
+        filter.addAction(Intent.ACTION_SCREEN_OFF);
+        mContext.registerReceiver(mSystemEventReceiver, filter);
+    }
+
+    public void destroy() {
+        // unregister system event receiver
+        mContext.unregisterReceiver(mSystemEventReceiver);
+    }
+
     public void showFloat(boolean recording) {
-        Log.d(TAG, "showFloat " + recording);
-        mCdrButton.setBackgroundResource(recording ? R.drawable.cdr_float_btn_record_0 : R.drawable.cdr_float_btn_normal_0);
-        if (mDisplayed) {
-            mWinMan.updateViewLayout(mFloatLayout, mLayoutParams);
-        }
-        else {
-            mWinMan.addView(mFloatLayout, mLayoutParams);
-        }
-        cdr_btn_state = recording ? 2 : 1;
-        mDisplayed    = true;
+        mRecording = recording;
+        mHandler.removeCallbacks(mShowFloatRunnable);
+        mHandler.postDelayed(mShowFloatRunnable, 800);
     }
 
     public void hideFloat() {
-        Log.d(TAG, "hideFloat");
-        mWinMan.removeView(mFloatLayout);
-        mDisplayed    = false;
+        mHandler.removeCallbacks(mShowFloatRunnable);
+        if (mDisplayed) {
+            mWinMan.removeView(mFloatLayout);
+            mDisplayed = false;
+        }
     }
 
     public void updateFloat(boolean recording) {
-        Log.d(TAG, "updateFloat " + recording);
         if (!mDisplayed) {
             return;
         }
-        mCdrButton.setBackgroundResource(recording ? R.drawable.cdr_float_btn_record_0 : R.drawable.cdr_float_btn_normal_0);
+        mRecording = recording;
+        mCdrButton.setBackgroundResource(mRecording ? R.drawable.cdr_float_btn_record_0 : R.drawable.cdr_float_btn_normal_0);
         mWinMan.updateViewLayout(mFloatLayout, mLayoutParams);
-        cdr_btn_state = recording ? 2 : 1;
+        mCdrBtnState = mRecording ? 2 : 1;
     }
+
+    private Runnable mShowFloatRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!mIsScreenOn) {
+                return;
+            }
+
+            mCdrButton.setBackgroundResource(mRecording ? R.drawable.cdr_float_btn_record_0 : R.drawable.cdr_float_btn_normal_0);
+            if (mDisplayed) {
+                mWinMan.updateViewLayout(mFloatLayout, mLayoutParams);
+            }
+            else {
+                mWinMan.addView(mFloatLayout, mLayoutParams);
+            }
+            mCdrBtnState = mRecording ? 2 : 1;
+            mDisplayed   = true;
+        }
+    };
+
+    private BroadcastReceiver mSystemEventReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals(Intent.ACTION_SCREEN_ON)) {
+                mIsScreenOn = true;
+            }
+            else if (action.equals(Intent.ACTION_SCREEN_OFF)) {
+                mIsScreenOn = false;
+            }
+        }
+    };
 }
 

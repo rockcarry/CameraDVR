@@ -101,6 +101,7 @@ public class RecordService extends Service implements
 
         // float window
         mFloatWin = new FloatWindow(this);
+        mFloatWin.create();
     }
 
     @Override
@@ -109,6 +110,7 @@ public class RecordService extends Service implements
 
         // hide float window
         mFloatWin.hideFloat();
+        mFloatWin.destroy();
 
         // remove watermark updater
         mHandler.removeCallbacks(mWaterMarkUpdater);
@@ -265,7 +267,7 @@ public class RecordService extends Service implements
 
             //++ enable watermark
             SystemProperties.set("sys.watermark.pos", "22-22");
-            mHandler.postDelayed(mWaterMarkUpdater, 50);
+            mHandler.post(mWaterMarkUpdater);
             //-- enable watermark
         } catch (Exception e) {
             e.printStackTrace();
