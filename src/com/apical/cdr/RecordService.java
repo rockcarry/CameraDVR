@@ -110,6 +110,7 @@ public class RecordService extends Service implements
 
         // remove watermark updater
         mHandler.removeCallbacks(mWaterMarkUpdater);
+        SystemProperties.set("sys.watermark.msg", "");
 
         if (mRecorder != null) {
             mRecorder.reset();
