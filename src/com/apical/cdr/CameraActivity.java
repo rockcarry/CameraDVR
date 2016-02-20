@@ -18,8 +18,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.util.Log;
 
-import com.apical.cdr.widget.ShutterButton;
-
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 
@@ -29,12 +27,17 @@ public class CameraActivity extends Activity
     private static final String TAG = "CameraActivity";
 
     private int            mCurrentCamera;
-    private SurfaceView    mPreview;
+    private SurfaceView    mFullPreview;
+    private SurfaceView    mSmallPreview;
     private View           mFlashView;
     private RelativeLayout mCamVideoUI;
-    private ShutterButton  mBtnShutter;
-    private TextView       mTxtRecTime;
+    private ImageView      mBtnGallery;
+    private ImageView      mBtnSettings;
+    private ImageView      mBtnShutter;
+    private ImageView      mBtnMuteSW;
+    private ImageView      mBtnCameraSW;
     private ImageView      mImpactLock;
+    private TextView       mTxtRecTime;
     private AnimationManager   mAnimManager;
     private PowerManager.WakeLock mWakeLock;
     Handler mHandler = new Handler();
@@ -45,7 +48,8 @@ public class CameraActivity extends Activity
         public void onServiceConnected(ComponentName name, IBinder serv) {
             mRecServ = ((RecordService.RecordBinder)serv).getService(CameraActivity.this);
             mRecServ.selectCamera(mCurrentCamera);
-            mRecServ.setPreviewSurfaceHolder(mPreview.getHolder());
+            mRecServ.setPreviewSurfaceHolder(mFullPreview.getHolder());
+            updateButtonsState();
         }
 
         @Override
@@ -64,17 +68,25 @@ public class CameraActivity extends Activity
         // init settings
         Settings.init(this);
 
-        mPreview = (SurfaceView)findViewById(R.id.camera_preview_view);
-        mPreview.getHolder().addCallback(mPreviewSurfaceHolderCallback);
+        mFullPreview = (SurfaceView)findViewById(R.id.camera_fullwin_preview);
+        mFullPreview.getHolder().addCallback(mPreviewSurfaceHolderCallback);
 
         mFlashView  = (View)findViewById(R.id.view_flash_overlay);
         mCamVideoUI = (RelativeLayout)findViewById(R.id.view_camera_videoui);
-        mBtnShutter = (ShutterButton)findViewById(R.id.btn_startstop_record);
-        mTxtRecTime = (TextView)findViewById(R.id.text_recording_time);
+        mBtnGallery = (ImageView)findViewById(R.id.btn_cdr_gallery);
+        mBtnSettings= (ImageView)findViewById(R.id.btn_cdr_settings);
+        mBtnShutter = (ImageView)findViewById(R.id.btn_cdr_shutter);
+        mBtnMuteSW  = (ImageView)findViewById(R.id.btn_recmic_mute_switcher);
+        mBtnCameraSW= (ImageView)findViewById(R.id.btn_cdr_camera_switcher);
         mImpactLock = (ImageView)findViewById(R.id.ic_impact_lock);
+        mTxtRecTime = (TextView )findViewById(R.id.text_recording_time);
 
-        mCamVideoUI.setOnLongClickListener(this);
-        mBtnShutter.setOnClickListener(this);
+        mCamVideoUI .setOnLongClickListener(this);
+        mBtnGallery .setOnClickListener(this);
+        mBtnSettings.setOnClickListener(this);
+        mBtnShutter .setOnClickListener(this);
+        mBtnMuteSW  .setOnClickListener(this);
+        mBtnCameraSW.setOnClickListener(this);
 
         // start record service
         Intent i = new Intent(CameraActivity.this, RecordService.class);
@@ -122,12 +134,8 @@ public class CameraActivity extends Activity
     @Override
     public void onResume() {
         super.onResume();
-        if (mRecServ != null && mRecServ.isRecording()) {
-            mBtnShutter.setImageResource(R.drawable.btn_new_shutter_recording);
-        }
-        else {
-            mBtnShutter.setImageResource(R.drawable.btn_new_shutter_video);
-        }
+
+        updateButtonsState();
 
         if (mRecServ != null) {
             mRecServ.onResume();
@@ -148,8 +156,14 @@ public class CameraActivity extends Activity
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-        case R.id.btn_startstop_record:
+        case R.id.btn_cdr_shutter:
             startRecording(!mRecServ.isRecording());
+            break;
+        case R.id.btn_recmic_mute_switcher:
+            setRecMicMute(!mRecServ.getRecMicMuted());
+            break;
+        case R.id.btn_cdr_camera_switcher:
+            switchCamera();
             break;
         }
     }
@@ -204,7 +218,6 @@ public class CameraActivity extends Activity
                 if (mRecServ.startRecording()) {
                     mWakeLock.acquire(); // acquire wake lock
                     mHandler.post(mRecordingTimeUpdater);
-                    mBtnShutter.setImageResource(R.drawable.btn_new_shutter_recording);
                     mTxtRecTime.setVisibility(View.VISIBLE);
                 }
             }
@@ -216,10 +229,56 @@ public class CameraActivity extends Activity
             mHandler.removeCallbacks(mRecordingTimeUpdater);
             mTxtRecTime.setVisibility(View.GONE);
             mRecServ.stopRecording();
-            mBtnShutter.setImageResource(R.drawable.btn_new_shutter_video);
             mWakeLock.release(); // release wake lock
         }
+        updateButtonsState();
         updateImpactLockView();
+    }
+
+    private void setRecMicMute(boolean mute) {
+        mRecServ.setRecMicMuted(mute);
+        updateButtonsState();
+    }
+
+    private void switchCamera() {
+        mRecServ.switchCamera();
+        updateButtonsState();
+    }
+
+    private void updateButtonsState() {
+        if (mRecServ != null && mRecServ.isRecording()) {
+            mBtnShutter.setImageResource(R.drawable.btn_new_shutter_recording);
+        }
+        else {
+            mBtnShutter.setImageResource(R.drawable.btn_new_shutter_video);
+        }
+
+        if (mRecServ != null && mRecServ.getRecMicMuted()) {
+            mBtnMuteSW.setImageResource(R.drawable.btn_new_recmic_mute_off);
+        }
+        else {
+            mBtnMuteSW.setImageResource(R.drawable.btn_new_recmic_mute_on);
+        }
+
+        if (mRecServ != null) {
+            switch (mRecServ.getCamSwitchState()) {
+            case 0:
+                mBtnCameraSW.setImageResource(R.drawable.btn_new_camera_switch_ab);
+                break;
+            case 1:
+                mBtnCameraSW.setImageResource(R.drawable.btn_new_camera_switch_ba);
+                break;
+            case 2:
+                mBtnCameraSW.setImageResource(R.drawable.btn_new_camera_switch_a );
+                break;
+            case 3:
+                mBtnCameraSW.setImageResource(R.drawable.btn_new_camera_switch_b );
+                break;
+            }
+        }
+        else {
+            mBtnCameraSW.setImageResource(R.drawable.btn_new_camera_switch_a);
+        }
     }
 
     private SurfaceHolder.Callback mPreviewSurfaceHolderCallback = new SurfaceHolder.Callback() {
@@ -267,14 +326,22 @@ public class CameraActivity extends Activity
     private Runnable mUIControlsHider = new Runnable() {
         @Override
         public void run() {
-            mBtnShutter.setVisibility(View.GONE);
+            mBtnGallery .setVisibility(View.GONE);
+            mBtnSettings.setVisibility(View.GONE);
+            mBtnShutter .setVisibility(View.GONE);
+            mBtnMuteSW  .setVisibility(View.GONE);
+            mBtnCameraSW.setVisibility(View.GONE);
         }
     };
 
     private void showUIControls(boolean show) {
         if (show) {
             mHandler.removeCallbacks(mUIControlsHider);
-            mBtnShutter.setVisibility(View.VISIBLE);
+            mBtnGallery .setVisibility(View.VISIBLE);
+            mBtnSettings.setVisibility(View.VISIBLE);
+            mBtnShutter .setVisibility(View.VISIBLE);
+            mBtnMuteSW  .setVisibility(View.VISIBLE);
+            mBtnCameraSW.setVisibility(View.VISIBLE);
         }
         else {
             mHandler.postDelayed(mUIControlsHider, 5000);

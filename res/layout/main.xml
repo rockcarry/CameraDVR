@@ -5,14 +5,14 @@
     android:orientation="horizontal" >
 
     <FrameLayout
-    	android:id="@+id/camera_preview"
-    	android:layout_width="match_parent"
-    	android:layout_height="match_parent"
-    	android:layout_gravity="center"
-    	android:layout_weight="1.0" >
+        android:id="@+id/camera_preview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:layout_weight="1.0" >
 
        <SurfaceView
-    	    android:id="@+id/camera_preview_view"
+            android:id="@+id/camera_fullwin_preview"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
@@ -23,6 +23,16 @@
             android:background="#ffffffff"
             android:visibility="gone"
             android:alpha="0" />
+
+        <SurfaceView
+            android:id="@+id/camera_smallwin_preview"
+            android:background="@drawable/bg_border"
+            android:padding="2dp"
+            android:layout_marginBottom="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_gravity="bottom|right"
+            android:layout_width="@dimen/usbcam_preview_width"
+            android:layout_height="@dimen/usbcam_preview_height" />
 
         <RelativeLayout
             android:id="@+id/view_camera_videoui"
@@ -52,13 +62,52 @@
                 android:layout_centerVertical ="true"
                 android:src="@drawable/ic_impact_lock" />
 
-            <com.apical.cdr.widget.ShutterButton
-                android:id="@+id/btn_startstop_record"
+            <ImageView
+                android:id="@+id/btn_cdr_gallery"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_alignParentRight="true"
+                android:layout_marginRight="16dp"
+                android:src="@drawable/btn_new_gallery" />
+
+            <ImageView
+                android:id="@+id/btn_cdr_settings"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentLeft="true"
+                android:layout_marginBottom="16dp"
+                android:layout_marginLeft="16dp"
+                android:src="@drawable/btn_new_setting" />
+
+            <ImageView
+                android:id="@+id/btn_cdr_shutter"
                 android:src="@drawable/btn_new_shutter_recording"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentBottom="true"
                 android:layout_centerHorizontal="true" />
+
+            <ImageView
+                android:id="@+id/btn_recmic_mute_switcher"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_toLeftOf="@id/btn_cdr_shutter"
+                android:layout_marginBottom="16dp"
+                android:layout_marginRight="16dp"
+                android:src="@drawable/btn_new_recmic_mute_on" />
+
+            <ImageView
+                android:id="@+id/btn_cdr_camera_switcher"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_toRightOf="@id/btn_cdr_shutter"
+                android:layout_marginBottom="16dp"
+                android:layout_marginLeft="16dp"
+                android:src="@drawable/btn_new_camera_switch_ab" />
         </RelativeLayout>
     </FrameLayout>
 

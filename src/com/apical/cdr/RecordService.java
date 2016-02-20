@@ -53,6 +53,9 @@ public class RecordService extends Service implements
     private boolean         mTakePhotoInProgress = false;
     private long            mRecordingStartTime  = Long.MAX_VALUE;
 
+    private boolean         mRecMicMuted    = false;
+    private int             mCamSwitchState = 0;
+
     @Override
     public void onCreate() {
         Log.d(TAG, "onCreate");
@@ -218,6 +221,23 @@ public class RecordService extends Service implements
 
     public boolean isRecording() {
         return mRecording;
+    }
+
+    public boolean getRecMicMuted() {
+        return mRecMicMuted;
+    }
+
+    public void setRecMicMuted(boolean mute) {
+        mRecMicMuted = mute;
+    }
+
+    public int getCamSwitchState() {
+        return mCamSwitchState;
+    }
+
+    public void switchCamera() {
+        mCamSwitchState++;
+        mCamSwitchState %= 4;
     }
 
     public int getRecordingMaxDuration() {
