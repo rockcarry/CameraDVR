@@ -297,14 +297,8 @@ public class RecordService extends Service implements
             mCamDev.release();
         }
 
-        switch (n) {
-        case 0:
-            mCamDev = Camera.open(0);
-            break;
-        case 1:
-            mCamDev = Camera.open(1);
-            break;
-        }
+        // open camera
+        mCamDev = Camera.open(n);
 
         Camera.Parameters params = mCamDev.getParameters();
         params .setPreviewSize(CAMERA_VIDEO_WIDTH, CAMERA_VIDEO_HEIGHT);
