@@ -13,6 +13,7 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -28,8 +29,8 @@ public class CameraActivity extends Activity
 
     private int            mCurMainCam;
     private int            mCurUsbCam;
-    private SurfaceView    mFullPreview;
-    private SurfaceView    mSmallPreview;
+    private SurfaceView    mCamMainPreview;
+    private SurfaceView    mCamUsbPreview;
     private View           mFlashView;
     private RelativeLayout mCamVideoUI;
     private ImageView      mBtnGallery;
@@ -43,15 +44,18 @@ public class CameraActivity extends Activity
     private PowerManager.WakeLock mWakeLock;
     Handler mHandler = new Handler();
 
+    private FrameLayout.LayoutParams mCamMainPreviewLayoutParams;
+    private FrameLayout.LayoutParams mCamUsbPreviewLayoutParams;
+
     private RecordService mRecServ = null;
     private ServiceConnection mRecServiceConn = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder serv) {
             mRecServ = ((RecordService.RecordBinder)serv).getService(CameraActivity.this);
             mRecServ.selectCamera(mCurMainCam, mCurUsbCam);
-
+            mRecServ.setPreviewSurfaceHolderMainCam(mCamMainPreview.getHolder());
+            mRecServ.setPreviewSurfaceHolderUsbCam (mCamUsbPreview .getHolder());
             updateCameraSwitchPreviewUI();
-
             updateButtonsState();
         }
 
@@ -71,11 +75,16 @@ public class CameraActivity extends Activity
         // init settings
         Settings.init(this);
 
-        mFullPreview = (SurfaceView)findViewById(R.id.camera_fullwin_preview);
-        mFullPreview.getHolder().addCallback(mFullPreviewSurfaceHolderCallback);
+        mCamMainPreview = (SurfaceView)findViewById(R.id.camera_main_preview);
+        mCamMainPreview.getHolder().addCallback(mCamMainPreviewCallback);
+        mCamMainPreview.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 
-        mSmallPreview = (SurfaceView)findViewById(R.id.camera_smallwin_preview);
-        mSmallPreview.getHolder().addCallback(mSmallPreviewSurfaceHolderCallback);
+        mCamUsbPreview = (SurfaceView)findViewById(R.id.camera_usb_preview);
+        mCamUsbPreview.getHolder().addCallback(mCamUsbPreviewCallback);
+        mCamUsbPreview.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+
+        mCamMainPreviewLayoutParams = (FrameLayout.LayoutParams) mCamMainPreview.getLayoutParams();
+        mCamUsbPreviewLayoutParams  = (FrameLayout.LayoutParams) mCamUsbPreview .getLayoutParams();
 
         mFlashView  = (View)findViewById(R.id.view_flash_overlay);
         mCamVideoUI = (RelativeLayout)findViewById(R.id.view_camera_videoui);
@@ -300,35 +309,42 @@ public class CameraActivity extends Activity
 
     private void updateCameraSwitchPreviewUI() {
         int state = mRecServ.getCamSwitchState();
-        int type  = (state & (1 << 0)) == 0 ? 0 : 1;
-        switch (type) {
-        case 0:
-            mRecServ.setPreviewSurfaceHolderMainCam(mFullPreview.getHolder());
-            mRecServ.setPreviewSurfaceHolderUsbCam (mSmallPreview.getHolder());
+        mCamMainPreview.setVisibility(View.GONE);
+        mCamUsbPreview .setVisibility(View.GONE);
+        switch (state) {
+        case 0: // ab
+            mCamUsbPreview .setLayoutParams(mCamUsbPreviewLayoutParams );
+            mCamMainPreview.setLayoutParams(mCamMainPreviewLayoutParams);
+            mCamUsbPreview .bringToFront();
+            mCamMainPreview.setVisibility(View.VISIBLE);
+            mCamUsbPreview .setVisibility(View.VISIBLE);
             break;
-        case 1:
-            mRecServ.setPreviewSurfaceHolderMainCam(mSmallPreview.getHolder());
-            mRecServ.setPreviewSurfaceHolderUsbCam (mFullPreview.getHolder());
+        case 1: // ba
+            mCamUsbPreview .setLayoutParams(mCamMainPreviewLayoutParams);
+            mCamMainPreview.setLayoutParams(mCamUsbPreviewLayoutParams );
+            mCamMainPreview.bringToFront();
+            mCamMainPreview.setVisibility(View.VISIBLE);
+            mCamUsbPreview .setVisibility(View.VISIBLE);
             break;
-        }
-        if ((state & (1 << 1)) == 0) {
-            mSmallPreview.setVisibility(View.VISIBLE);
-        }
-        else {
-            mSmallPreview.setVisibility(View.GONE);
+        case 2: // a
+            mCamMainPreview.setLayoutParams(mCamMainPreviewLayoutParams);
+            mCamMainPreview.bringToFront();
+            mCamMainPreview.setVisibility(View.VISIBLE);
+            break;
+        case 3: // b
+            mCamUsbPreview .setLayoutParams(mCamMainPreviewLayoutParams);
+            mCamUsbPreview .bringToFront();
+            mCamUsbPreview .setVisibility(View.VISIBLE);
+            break;
         }
     }
 
-    private SurfaceHolder.Callback mFullPreviewSurfaceHolderCallback = new SurfaceHolder.Callback() {
+    private SurfaceHolder.Callback mCamMainPreviewCallback = new SurfaceHolder.Callback() {
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
             Log.d(TAG, "surfaceCreated");
             if (mRecServ != null) {
-                int type = (mRecServ.getCamSwitchState() & (1 << 0)) == 0 ? 0 : 1;
-                switch (type) {
-                case 0: mRecServ.setPreviewSurfaceHolderMainCam(holder); break;
-                case 1: mRecServ.setPreviewSurfaceHolderUsbCam (holder); break;
-                }
+                mRecServ.setPreviewSurfaceHolderMainCam(holder);
             }
         }
 
@@ -336,11 +352,7 @@ public class CameraActivity extends Activity
         public void surfaceDestroyed(SurfaceHolder holder) {
             Log.d(TAG, "surfaceDestroyed");
             if (mRecServ != null) {
-                int type = (mRecServ.getCamSwitchState() & (1 << 0)) == 0 ? 0 : 1;
-                switch (type) {
-                case 0: mRecServ.setPreviewSurfaceHolderMainCam(null); break;
-                case 1: mRecServ.setPreviewSurfaceHolderUsbCam (null); break;
-                }
+                mRecServ.setPreviewSurfaceHolderMainCam(null);
             }
         }
 
@@ -350,16 +362,12 @@ public class CameraActivity extends Activity
         }
     };
 
-    private SurfaceHolder.Callback mSmallPreviewSurfaceHolderCallback = new SurfaceHolder.Callback() {
+    private SurfaceHolder.Callback mCamUsbPreviewCallback = new SurfaceHolder.Callback() {
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
             Log.d(TAG, "surfaceCreated");
             if (mRecServ != null) {
-                int type = (mRecServ.getCamSwitchState() & (1 << 0)) == 0 ? 0 : 1;
-                switch (type) {
-                case 1: mRecServ.setPreviewSurfaceHolderMainCam(holder); break;
-                case 0: mRecServ.setPreviewSurfaceHolderUsbCam (holder); break;
-                }
+                mRecServ.setPreviewSurfaceHolderUsbCam(holder);
             }
         }
 
@@ -367,11 +375,7 @@ public class CameraActivity extends Activity
         public void surfaceDestroyed(SurfaceHolder holder) {
             Log.d(TAG, "surfaceDestroyed");
             if (mRecServ != null) {
-                int type = (mRecServ.getCamSwitchState() & (1 << 0)) == 0 ? 0 : 1;
-                switch (type) {
-                case 1: mRecServ.setPreviewSurfaceHolderMainCam(null); break;
-                case 0: mRecServ.setPreviewSurfaceHolderUsbCam (null); break;
-                }
+                mRecServ.setPreviewSurfaceHolderUsbCam(null);
             }
         }
 
