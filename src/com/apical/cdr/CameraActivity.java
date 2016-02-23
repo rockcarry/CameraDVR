@@ -160,6 +160,15 @@ public class CameraActivity extends Activity
     }
 
     @Override
+    public void onBackPressed() {
+        int type = Settings.get(Settings.KEY_HANDLE_BACK_KEY_TYPE, Settings.DEF_HANDLE_BACK_KEY_TYPE);
+        switch (type) {
+        case 0: super.onBackPressed(); break;
+        case 1: moveTaskToBack(true);  break;
+        }
+    }
+
+    @Override
     public void onClick(View v) {
         switch (v.getId()) {
         case R.id.btn_cdr_shutter:
