@@ -36,25 +36,24 @@ public class RecordService extends Service implements
     private static final int RECORD_AUDIO_BITRATE= 12200;
     private static final int RECORD_MAX_DURATION = 60 * 1000;
 
-    private RecordBinder    mBinder      = null;
-    private Camera          mCamDev      = null;
-    private MediaRecorder   mRecorder    = null;
-    private boolean         mRecording   = false;
-    private MediaSaver      mMediaSaver  = null;
-    private SurfaceHolder   mHolder      = null;
-    private SurfaceView     mSurViewNull = null;
-    private String          mCurVideoFile= null;
-    private GSensorMonitor  mGSensorMon  = null;
-    private LocationMonitor mLocationMon = null;
-    private SdcardManager   mSdManager   = null;
-    private FloatWindow     mFloatWin    = null;
-    private Handler         mHandler     = new Handler();
-    private CameraActivity  mActivity    = null;
+    private RecordBinder    mBinder        = null;
+    private Camera          mCamDev        = null;
+    private MediaRecorder   mRecorder      = null;
+    private boolean         mRecording     = false;
+    private MediaSaver      mMediaSaver    = null;
+    private SurfaceView     mSurViewNull   = null;
+    private String          mCurVideoFile  = null;
+    private GSensorMonitor  mGSensorMon    = null;
+    private LocationMonitor mLocationMon   = null;
+    private SdcardManager   mSdManager     = null;
+    private FloatWindow     mFloatWin      = null;
+    private Handler         mHandler       = new Handler();
+    private CameraActivity  mActivity      = null;
     private boolean         mTakePhotoInProgress = false;
     private long            mRecordingStartTime  = Long.MAX_VALUE;
 
     private boolean         mRecMicMuted    = false;
-    private int             mCamSwitchState = 0;
+    private int             mCamSwitchState = Settings.get(Settings.KEY_CAMERA_SWITCH_STATE_VALUE, Settings.DEF_CAMERA_SWITCH_STATE_VALUE);
 
     @Override
     public void onCreate() {
@@ -160,6 +159,7 @@ public class RecordService extends Service implements
     public boolean startRecording() {
         if (mRecording) return mRecording;
 
+        //++ for main camera
         try {
             mCamDev.unlock();
             mRecorder.setCamera(mCamDev);
@@ -179,7 +179,7 @@ public class RecordService extends Service implements
             mRecorder.setAudioSamplingRate(CAMERA_AUDIO_SRATE);
             mRecorder.setAudioEncodingBitRate(RECORD_AUDIO_BITRATE);
 
-            mCurVideoFile = getNewRecordFileName();
+            mCurVideoFile = getNewRecordFileName(0);
             mRecorder.setMaxDuration(RECORD_MAX_DURATION);
             mRecorder.setOutputFile(mCurVideoFile);
             mRecorder.setOnErrorListener(RecordService.this);
@@ -191,6 +191,11 @@ public class RecordService extends Service implements
         } catch (Exception e) {
             e.printStackTrace();
         }
+        //-- for main camera
+
+        //++ for usb camera
+        // todo...
+        //-- for usb camera
 
         // update float window
         mFloatWin.updateFloat(mRecording);
@@ -238,6 +243,10 @@ public class RecordService extends Service implements
     public void switchCamera() {
         mCamSwitchState++;
         mCamSwitchState %= 4;
+
+        if (Settings.get(Settings.KEY_CAMERA_SWITCH_STATE_SAVE, Settings.DEF_CAMERA_SWITCH_STATE_SAVE) == 1) {
+            Settings.set(Settings.KEY_CAMERA_SWITCH_STATE_VALUE, mCamSwitchState);
+        }
     }
 
     public int getRecordingMaxDuration() {
@@ -248,78 +257,95 @@ public class RecordService extends Service implements
         return mRecordingStartTime;
     }
 
-    public void takePhoto(Camera.ShutterCallback sc) {
+    public void takePhoto(int type, Camera.ShutterCallback sc) {
         if (mTakePhotoInProgress) return;
+        else mTakePhotoInProgress = true;
 
-        mTakePhotoInProgress = true;
-        mCamDev.takePicture(sc, null,
-            new Camera.PictureCallback() {
-                @Override
-                public void onPictureTaken(byte[] data, Camera cam) {
-                    Log.d(TAG, "takePhoto onPictureTaken");
-                    Location      loc  = mLocationMon.getCurrentLocation();
-                    ExifInterface exif = Exif.getExif(data);
-                    int    orientation = Exif.getOrientation(exif);
+        switch (type) {
+        case 0: // main camera
+            mCamDev.takePicture(sc, null,
+                new Camera.PictureCallback() {
+                    @Override
+                    public void onPictureTaken(byte[] data, Camera cam) {
+                        Log.d(TAG, "takePhoto onPictureTaken");
+                        Location      loc  = mLocationMon.getCurrentLocation();
+                        ExifInterface exif = Exif.getExif(data);
+                        int    orientation = Exif.getOrientation(exif);
 
-                    mMediaSaver.addImage(data,
-                        getNewPhotoFileName(), System.currentTimeMillis(),
-                        loc, 0, 0, orientation, exif);
+                        mMediaSaver.addImage(data,
+                            getNewPhotoFileName(0), System.currentTimeMillis(),
+                            loc, 0, 0, orientation, exif);
 
-                    mTakePhotoInProgress = false;
-                }
-            });
+                        mTakePhotoInProgress = false;
+                    }
+                });
+            break;
+        case 1: // usb camera
+            // todo...
+            break;
+        }
     }
 
-    public void setPreviewSurfaceHolder(SurfaceHolder holder) {
+    public void setPreviewSurfaceHolderMainCam(SurfaceHolder holder) {
+        //++ for main camera
         if (holder == null) {
             holder = mSurViewNull.getHolder();
-        }
-        else {
-            mHolder = holder;
         }
         try {
             mCamDev.stopPreview();
             mCamDev.setPreviewDisplay(holder);
             mCamDev.startPreview();
-
-            //++ enable watermark
-            SystemProperties.set("sys.watermark.pos", "22-22");
-            mHandler.post(mWaterMarkUpdater);
-            //-- enable watermark
         } catch (Exception e) {
             e.printStackTrace();
         }
+        //-- for main camera
     }
 
-    public void selectCamera(int n) {
+    public void setPreviewSurfaceHolderUsbCam(SurfaceHolder holder) {
+        //++ for usb camera
+        // todo...
+        //-- for usb camera
+    }
+
+    public void selectCamera(int maincam, int usbcam) {
+        //++ for main camera
         if (mCamDev != null) {
             mCamDev.stopPreview();
             mCamDev.release();
         }
 
         // open camera
-        mCamDev = Camera.open(n);
+        mCamDev = Camera.open(maincam);
 
         Camera.Parameters params = mCamDev.getParameters();
         params .setPreviewSize(CAMERA_VIDEO_WIDTH, CAMERA_VIDEO_HEIGHT);
         mCamDev.setParameters(params);
-        setPreviewSurfaceHolder(mHolder);
+
+        // enable watermark
+        SystemProperties.set("sys.watermark.pos", "22-22");
+        mHandler.removeCallbacks(mWaterMarkUpdater);
+        mHandler.post(mWaterMarkUpdater);
+        //-- for main camera
+
+        //++ for usb camera
+        // todo...
+        //-- for usb camera
     }
 
-    public static String getNewRecordFileName() {
+    public static String getNewRecordFileName(int type) {
         SdcardManager.makeCdrDirs(); // make cdr dirs
 
         Date date = new Date(System.currentTimeMillis());
         SimpleDateFormat df = new SimpleDateFormat("'VID'_yyyyMMdd_HHmmss");
-        return SdcardManager.DIRECTORY_VIDEO + "/" + df.format(date) + ".mp4";
+        return SdcardManager.DIRECTORY_VIDEO + "/" + (type == 0 ? "A_" : "B_") + df.format(date) + ".mp4";
     }
 
-    public static String getNewPhotoFileName() {
+    public static String getNewPhotoFileName(int type) {
         SdcardManager.makeCdrDirs(); // make cdr dirs
 
         Date date = new Date(System.currentTimeMillis());
         SimpleDateFormat df = new SimpleDateFormat("'IMG'_yyyyMMdd_HHmmss");
-        return SdcardManager.DIRECTORY_PHOTO + "/" + df.format(date) + ".jpg";
+        return SdcardManager.DIRECTORY_PHOTO + "/" + (type == 0 ? "A_" : "B_") + df.format(date) + ".jpg";
     }
 
     public void onResume() {

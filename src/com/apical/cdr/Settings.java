@@ -12,6 +12,12 @@ public class Settings {
     public static final int DEF_FLOAT_BTN_POS_Y    = 0;
     public static final int DEF_FLOAT_BTN_POS_SAVE = 1;
 
+    public static final String KEY_CAMERA_SWITCH_STATE_VALUE = "KEY_CAMERA_SWITCH_STATE_VALUE";
+    public static final String KEY_CAMERA_SWITCH_STATE_SAVE  = "KEY_CAMERA_SWITCH_STATE_SAVE";
+
+    public static final int DEF_CAMERA_SWITCH_STATE_VALUE = 0;
+    public static final int DEF_CAMERA_SWITCH_STATE_SAVE = 1;
+
     private static final String TAG = "GSensorMonitor";
     private static final String CDR_SETTINGS_SHARED_PREFS = "CDR_SETTINGS_SHARED_PREFS";
 

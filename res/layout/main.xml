@@ -11,7 +11,7 @@
         android:layout_gravity="center"
         android:layout_weight="1.0" >
 
-       <SurfaceView
+        <SurfaceView
             android:id="@+id/camera_fullwin_preview"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
