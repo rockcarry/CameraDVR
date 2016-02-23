@@ -37,7 +37,8 @@ public class RecordService extends Service implements
     private static final int RECORD_MAX_DURATION = 60 * 1000;
 
     private RecordBinder    mBinder        = null;
-    private Camera          mCamDev        = null;
+    private Camera          mCamDevMain    = null;
+    private UsbCam          mCamDevUsb     = null;
     private MediaRecorder   mRecorder      = null;
     private boolean         mRecording     = false;
     private MediaSaver      mMediaSaver    = null;
@@ -120,10 +121,10 @@ public class RecordService extends Service implements
             mRecorder = null;
         }
 
-        if (mCamDev != null) {
-            mCamDev.stopPreview();
-            mCamDev.release();
-            mCamDev = null;
+        if (mCamDevMain != null) {
+            mCamDevMain.stopPreview();
+            mCamDevMain.release();
+            mCamDevMain = null;
         }
 
         // stop disk recycle
@@ -161,8 +162,8 @@ public class RecordService extends Service implements
 
         //++ for main camera
         try {
-            mCamDev.unlock();
-            mRecorder.setCamera(mCamDev);
+            mCamDevMain.unlock();
+            mRecorder.setCamera(mCamDevMain);
             mRecorder.setPreviewDisplay(null);
 
             mRecorder.setAudioSource (MediaRecorder.AudioSource.CAMCORDER); 
@@ -211,7 +212,7 @@ public class RecordService extends Service implements
         mRecorder.setOnInfoListener (null);
         mRecorder.stop();
         mRecorder.release();
-        mCamDev  .lock();
+        mCamDevMain.lock();
 
         // add video to media saver
         mMediaSaver.addVideo(mCurVideoFile, CAMERA_VIDEO_WIDTH, CAMERA_VIDEO_HEIGHT);
@@ -219,6 +220,10 @@ public class RecordService extends Service implements
         // re-create a new recorder for next recordnig
         mRecorder  = new MediaRecorder();
         mRecording = false;
+
+        //++ for usb camera
+        // todo...
+        //-- for usb camera
 
         // update float window
         mFloatWin.updateFloat(mRecording);
@@ -263,7 +268,7 @@ public class RecordService extends Service implements
 
         switch (type) {
         case 0: // main camera
-            mCamDev.takePicture(sc, null,
+            mCamDevMain.takePicture(sc, null,
                 new Camera.PictureCallback() {
                     @Override
                     public void onPictureTaken(byte[] data, Camera cam) {
@@ -281,7 +286,22 @@ public class RecordService extends Service implements
                 });
             break;
         case 1: // usb camera
-            // todo...
+            mCamDevUsb.takePicture(sc, null,
+                new Camera.PictureCallback() {
+                    @Override
+                    public void onPictureTaken(byte[] data, Camera cam) {
+                        Log.d(TAG, "takePhoto onPictureTaken");
+                        Location      loc  = mLocationMon.getCurrentLocation();
+                        ExifInterface exif = Exif.getExif(data);
+                        int    orientation = Exif.getOrientation(exif);
+
+                        mMediaSaver.addImage(data,
+                            getNewPhotoFileName(1), System.currentTimeMillis(),
+                            loc, 0, 0, orientation, exif);
+
+                        mTakePhotoInProgress = false;
+                    }
+                });
             break;
         }
     }
@@ -292,9 +312,9 @@ public class RecordService extends Service implements
             holder = mSurViewNull.getHolder();
         }
         try {
-            mCamDev.stopPreview();
-            mCamDev.setPreviewDisplay(holder);
-            mCamDev.startPreview();
+            mCamDevMain.stopPreview();
+            mCamDevMain.setPreviewDisplay(holder);
+            mCamDevMain.startPreview();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -303,23 +323,32 @@ public class RecordService extends Service implements
 
     public void setPreviewSurfaceHolderUsbCam(SurfaceHolder holder) {
         //++ for usb camera
-        // todo...
+        if (holder == null) {
+            holder = mSurViewNull.getHolder();
+        }
+        try {
+            mCamDevUsb.stopPreview();
+            mCamDevUsb.setPreviewDisplay(holder);
+            mCamDevUsb.startPreview();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         //-- for usb camera
     }
 
     public void selectCamera(int maincam, int usbcam) {
         //++ for main camera
-        if (mCamDev != null) {
-            mCamDev.stopPreview();
-            mCamDev.release();
+        if (mCamDevMain != null) {
+            mCamDevMain.stopPreview();
+            mCamDevMain.release();
         }
 
         // open camera
-        mCamDev = Camera.open(maincam);
+        mCamDevMain = Camera.open(maincam);
 
-        Camera.Parameters params = mCamDev.getParameters();
-        params .setPreviewSize(CAMERA_VIDEO_WIDTH, CAMERA_VIDEO_HEIGHT);
-        mCamDev.setParameters(params);
+        Camera.Parameters params = mCamDevMain.getParameters();
+        params.setPreviewSize(CAMERA_VIDEO_WIDTH, CAMERA_VIDEO_HEIGHT);
+        mCamDevMain.setParameters(params);
 
         // enable watermark
         SystemProperties.set("sys.watermark.pos", "22-22");
@@ -328,7 +357,13 @@ public class RecordService extends Service implements
         //-- for main camera
 
         //++ for usb camera
-        // todo...
+        if (mCamDevUsb != null) {
+            mCamDevUsb.stopPreview();
+            mCamDevUsb.release();
+        }
+
+        // open camera
+        mCamDevUsb = UsbCam.open(usbcam);
         //-- for usb camera
     }
 

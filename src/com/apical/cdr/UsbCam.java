@@ -1,14 +1,14 @@
 package com.apical.cdr;
 
 import android.hardware.Camera;
-import android.view.Surface;
+import android.view.SurfaceHolder;
 
 public class UsbCam {
-    public boolean open(int dev) { return false; }
-    public void setPreviewDisplay(Surface surface) {}
+    public static UsbCam open(int dev) { return null; }
+    public void setPreviewDisplay(SurfaceHolder holder) {}
     public void startPreview() {}
     public void stopPreview() {}
-    public void takePicture(Camera.ShutterCallback sc, Camera.PictureCallback pc) {}
+    public void takePicture(Camera.ShutterCallback sc, Camera.PictureCallback rawpc, Camera.PictureCallback jpgpc) {}
     public void release() {}
 };
 
