@@ -3,6 +3,7 @@ package com.apical.cdr;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.location.Location;
 import android.media.MediaRecorder;
@@ -310,7 +311,18 @@ public class RecordService extends Service implements
         }
     }
 
-    public void setPreviewSurfaceHolderMainCam(SurfaceHolder holder) {
+    public void setCamMainPreviewTexture(SurfaceTexture st) {
+        //++ for main camera
+        try {
+            mCamDevMain.setPreviewTexture(st);
+            mCamDevMain.startPreview();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        //-- for main camera
+    }
+
+    public void setCamMainPreviewDisplay(SurfaceHolder holder) {
         //++ for main camera
         try {
             mCamDevMain.setPreviewDisplay(holder);
@@ -321,7 +333,18 @@ public class RecordService extends Service implements
         //-- for main camera
     }
 
-    public void setPreviewSurfaceHolderUsbCam(SurfaceHolder holder) {
+    public void setCamUsbPreviewTexture(SurfaceTexture st) {
+        //++ for main camera
+        try {
+            mCamDevUsb.setPreviewTexture(st);
+            mCamDevUsb.startPreview();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        //-- for main camera
+    }
+
+    public void setCamUsbPreviewDisplay(SurfaceHolder holder) {
         //++ for usb camera
         try {
             mCamDevUsb.setPreviewDisplay(holder);

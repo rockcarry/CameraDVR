@@ -1,5 +1,6 @@
 package com.apical.cdr;
 
+import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.view.SurfaceHolder;
 
@@ -30,6 +31,10 @@ public class UsbCam {
         else {
             nativeSetPreviewSurface(m_hUsbCamNative, null, 0, 0);
         }
+    }
+
+    public void setPreviewTexture(SurfaceTexture texture) {
+        // todo...
     }
 
     public void startPreview() {
