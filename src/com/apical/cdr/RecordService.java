@@ -42,7 +42,6 @@ public class RecordService extends Service implements
     private MediaRecorder   mRecorder      = null;
     private boolean         mRecording     = false;
     private MediaSaver      mMediaSaver    = null;
-    private SurfaceView     mSurViewNull   = null;
     private String          mCurVideoFile  = null;
     private GSensorMonitor  mGSensorMon    = null;
     private LocationMonitor mLocationMon   = null;
@@ -63,7 +62,6 @@ public class RecordService extends Service implements
         mBinder      = new RecordBinder ();
         mRecorder    = new MediaRecorder();
         mMediaSaver  = new MediaSaver (this, mGSensorImpactListener);
-        mSurViewNull = new SurfaceView(this);
 
         // gsensor monitor
         mGSensorMon = new GSensorMonitor(this, mGSensorImpactListener);
@@ -125,6 +123,12 @@ public class RecordService extends Service implements
             mCamDevMain.stopPreview();
             mCamDevMain.release();
             mCamDevMain = null;
+        }
+
+        if (mCamDevUsb != null) {
+            mCamDevUsb.stopPreview();
+            mCamDevUsb.release();
+            mCamDevUsb = null;
         }
 
         // stop disk recycle
@@ -308,11 +312,7 @@ public class RecordService extends Service implements
 
     public void setPreviewSurfaceHolderMainCam(SurfaceHolder holder) {
         //++ for main camera
-        if (holder == null) {
-            holder = mSurViewNull.getHolder();
-        }
         try {
-            mCamDevMain.stopPreview();
             mCamDevMain.setPreviewDisplay(holder);
             mCamDevMain.startPreview();
         } catch (Exception e) {
@@ -323,11 +323,7 @@ public class RecordService extends Service implements
 
     public void setPreviewSurfaceHolderUsbCam(SurfaceHolder holder) {
         //++ for usb camera
-        if (holder == null) {
-            holder = mSurViewNull.getHolder();
-        }
         try {
-            mCamDevUsb.stopPreview();
             mCamDevUsb.setPreviewDisplay(holder);
             mCamDevUsb.startPreview();
         } catch (Exception e) {

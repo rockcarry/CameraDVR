@@ -21,11 +21,14 @@ public class UsbCam {
     }
 
     public void setPreviewDisplay(SurfaceHolder holder) {
-        if (holder.getSurfaceFrame().right != 0 && holder.getSurfaceFrame().bottom != 0) {
+        if (holder != null && holder.getSurfaceFrame().right != 0 && holder.getSurfaceFrame().bottom != 0) {
             nativeSetPreviewSurface(m_hUsbCamNative,
                 holder.getSurface(),
                 holder.getSurfaceFrame().right,
                 holder.getSurfaceFrame().bottom);
+        }
+        else {
+            nativeSetPreviewSurface(m_hUsbCamNative, null, 0, 0);
         }
     }
 

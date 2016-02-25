@@ -27,8 +27,8 @@ public class CameraActivity extends Activity
 {
     private static final String TAG = "CameraActivity";
 
-    private int            mCurMainCam;
-    private int            mCurUsbCam;
+    private int            mCurMainCam = 0;
+    private int            mCurUsbCam  = 2;
     private SurfaceView    mCamMainPreview;
     private SurfaceView    mCamUsbPreview;
     private View           mFlashView;
@@ -331,13 +331,11 @@ public class CameraActivity extends Activity
         case 2: // a
             mCamUsbPreview .setVisibility(View.INVISIBLE);
             mCamMainPreview.setLayoutParams(mCamMainPreviewLayoutParams);
-            mCamMainPreview.bringToFront();
             mCamMainPreview.setVisibility(View.VISIBLE);
             break;
         case 3: // b
             mCamMainPreview.setVisibility(View.INVISIBLE);
             mCamUsbPreview .setLayoutParams(mCamMainPreviewLayoutParams);
-            mCamUsbPreview .bringToFront();
             mCamUsbPreview .setVisibility(View.VISIBLE);
             break;
         }
@@ -363,9 +361,6 @@ public class CameraActivity extends Activity
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
             Log.d(TAG, "surfaceChanged");
-            if (mRecServ != null) {
-//              mRecServ.setPreviewSurfaceHolderMainCam(holder);
-            }
         }
     };
 
@@ -389,9 +384,6 @@ public class CameraActivity extends Activity
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
             Log.d(TAG, "surfaceChanged");
-            if (mRecServ != null) {
-//              mRecServ.setPreviewSurfaceHolderUsbCam(holder);
-            }
         }
     };
 
