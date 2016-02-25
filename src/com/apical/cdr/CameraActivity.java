@@ -11,8 +11,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.view.MotionEvent;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -32,7 +30,7 @@ public class CameraActivity extends Activity
     private int            mCurCamMain = 0;
     private int            mCurCamUsb  = 2;
     private TextureView    mCamMainPreview;
-    private SurfaceView    mCamUsbPreview;
+    private TextureView    mCamUsbPreview;
     private View           mFlashView;
     private RelativeLayout mCamVideoUI;
     private ImageView      mBtnGallery;
@@ -56,8 +54,7 @@ public class CameraActivity extends Activity
             mRecServ = ((RecordService.RecordBinder)serv).getService(CameraActivity.this);
             mRecServ.selectCamera(mCurCamMain, mCurCamUsb);
             mRecServ.setCamMainPreviewTexture(mCamMainTexture);
-//          mRecServ.setCamMainPreviewDisplay(mCamMainPreview.getSurface());
-            mRecServ.setCamUsbPreviewDisplay (mCamUsbPreview .getHolder ());
+            mRecServ.setCamUsbPreviewTexture (mCamUsbTexture );
             updateCameraSwitchPreviewUI();
             updateButtonsState();
         }
@@ -79,13 +76,10 @@ public class CameraActivity extends Activity
         Settings.init(this);
 
         mCamMainPreview = (TextureView)findViewById(R.id.camera_main_preview);
-//      mCamMainPreview.getHolder().addCallback(mCamMainPreviewCallback);
-//      mCamMainPreview.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         mCamMainPreview.setSurfaceTextureListener(mCamMainSurfaceTextureListener);
 
-        mCamUsbPreview = (SurfaceView)findViewById(R.id.camera_usb_preview);
-        mCamUsbPreview.getHolder().addCallback(mCamUsbPreviewCallback);
-        mCamUsbPreview.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        mCamUsbPreview = (TextureView)findViewById(R.id.camera_usb_preview);
+        mCamUsbPreview.setSurfaceTextureListener(mCamUsbSurfaceTextureListener);
 
         mCamMainPreviewLayoutParams = (FrameLayout.LayoutParams) mCamMainPreview.getLayoutParams();
         mCamUsbPreviewLayoutParams  = (FrameLayout.LayoutParams) mCamUsbPreview .getLayoutParams();
@@ -343,7 +337,7 @@ public class CameraActivity extends Activity
         }
     }
 
-    private SurfaceTexture mCamMainTexture;
+    private SurfaceTexture mCamMainTexture = null;
     private TextureView.SurfaceTextureListener mCamMainSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
@@ -367,7 +361,7 @@ public class CameraActivity extends Activity
         }
     };
 
-    private SurfaceTexture mCamUsbTexture;
+    private SurfaceTexture mCamUsbTexture = null;
     private TextureView.SurfaceTextureListener mCamUsbSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
@@ -388,52 +382,6 @@ public class CameraActivity extends Activity
 
         @Override
         public void onSurfaceTextureUpdated(SurfaceTexture texture) {
-        }
-    };
-
-    private SurfaceHolder.Callback mCamMainPreviewCallback = new SurfaceHolder.Callback() {
-        @Override
-        public void surfaceCreated(SurfaceHolder holder) {
-            Log.d(TAG, "surfaceCreated");
-            if (mRecServ != null) {
-                mRecServ.setCamMainPreviewDisplay(holder);
-            }
-        }
-
-        @Override
-        public void surfaceDestroyed(SurfaceHolder holder) {
-            Log.d(TAG, "surfaceDestroyed");
-            if (mRecServ != null) {
-                mRecServ.setCamMainPreviewDisplay(null);
-            }
-        }
-
-        @Override
-        public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
-            Log.d(TAG, "surfaceChanged");
-        }
-    };
-
-    private SurfaceHolder.Callback mCamUsbPreviewCallback = new SurfaceHolder.Callback() {
-        @Override
-        public void surfaceCreated(SurfaceHolder holder) {
-            Log.d(TAG, "surfaceCreated");
-            if (mRecServ != null) {
-                mRecServ.setCamUsbPreviewDisplay(holder);
-            }
-        }
-
-        @Override
-        public void surfaceDestroyed(SurfaceHolder holder) {
-            Log.d(TAG, "surfaceDestroyed");
-            if (mRecServ != null) {
-                mRecServ.setCamUsbPreviewDisplay(null);
-            }
-        }
-
-        @Override
-        public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
-            Log.d(TAG, "surfaceChanged");
         }
     };
 

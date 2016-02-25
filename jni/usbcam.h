@@ -42,7 +42,8 @@ typedef struct {
 // º¯Êý¶¨Òå
 USBCAM* usbcam_init (const char *dev);
 void    usbcam_close(USBCAM *cam);
-void    usbcam_set_preview_display(USBCAM *cam, sp<ANativeWindow> win, int w, int h);
+void    usbcam_set_preview_window(USBCAM *cam, const sp<ANativeWindow> win);
+void    usbcam_set_preview_target(USBCAM *cam, const sp<IGraphicBufferProducer>& gbp);
 void    usbcam_start_preview(USBCAM *cam);
 void    usbcam_stop_preview (USBCAM *cam);
 

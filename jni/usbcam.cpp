@@ -193,7 +193,7 @@ void usbcam_close(USBCAM *cam)
     free(cam);
 }
 
-void usbcam_set_preview_display(USBCAM *cam, sp<ANativeWindow> win, int w, int h)
+void usbcam_set_preview_window(USBCAM *cam, const sp<ANativeWindow> win)
 {
     if (cam) {
         cam->new_win = win;
@@ -203,6 +203,18 @@ void usbcam_set_preview_display(USBCAM *cam, sp<ANativeWindow> win, int w, int h
         cam->new_h   = 480;
         cam->update_preview_flag = 1;
     }
+}
+
+void usbcam_set_preview_target(USBCAM *cam, const sp<IGraphicBufferProducer>& gbp)
+{
+    sp<ANativeWindow> win;
+    if (gbp != 0) {
+        // Using controlledByApp flag to ensure that the buffer queue remains in
+        // async mode for the old camera API, where many applications depend
+        // on that behavior.
+        win = new Surface(gbp, /*controlledByApp*/ true);
+    }
+    usbcam_set_preview_window(cam, win);
 }
 
 void usbcam_start_preview(USBCAM *cam)

@@ -23,18 +23,20 @@ public class UsbCam {
 
     public void setPreviewDisplay(SurfaceHolder holder) {
         if (holder != null && holder.getSurfaceFrame().right != 0 && holder.getSurfaceFrame().bottom != 0) {
-            nativeSetPreviewSurface(m_hUsbCamNative,
-                holder.getSurface(),
-                holder.getSurfaceFrame().right,
-                holder.getSurfaceFrame().bottom);
+            nativeSetPreviewSurface(m_hUsbCamNative, holder.getSurface());
         }
         else {
-            nativeSetPreviewSurface(m_hUsbCamNative, null, 0, 0);
+            nativeSetPreviewSurface(m_hUsbCamNative, null);
         }
     }
 
     public void setPreviewTexture(SurfaceTexture texture) {
-        // todo...
+        if (texture != null) {
+            nativeSetPreviewTexture(m_hUsbCamNative, texture);
+        }
+        else {
+            nativeSetPreviewTexture(m_hUsbCamNative, null);
+        }
     }
 
     public void startPreview() {
@@ -56,7 +58,8 @@ public class UsbCam {
 
     private static native long nativeInit (String dev);
     private static native void nativeClose(long husbcam);
-    private static native void nativeSetPreviewSurface(long husbcam, Object surface, int w, int h);
+    private static native void nativeSetPreviewSurface(long husbcam, Object surface);
+    private static native void nativeSetPreviewTexture(long husbcam, Object surface);
     private static native void nativeStartPreview(long husbcam);
     private static native void nativeStopPreview (long husbcam);
 

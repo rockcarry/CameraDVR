@@ -10,7 +10,7 @@ extern "C" {
 /*
  * Class:     com_apical_cdr_UsbCam
  * Method:    nativeInit
- * Signature: (Ljava/lang/String;)I
+ * Signature: (Ljava/lang/String;)J
  */
 JNIEXPORT jlong JNICALL Java_com_apical_cdr_UsbCam_nativeInit
   (JNIEnv *, jclass, jstring);
@@ -18,7 +18,7 @@ JNIEXPORT jlong JNICALL Java_com_apical_cdr_UsbCam_nativeInit
 /*
  * Class:     com_apical_cdr_UsbCam
  * Method:    nativeClose
- * Signature: (I)V
+ * Signature: (J)V
  */
 JNIEXPORT void JNICALL Java_com_apical_cdr_UsbCam_nativeClose
   (JNIEnv *, jclass, jlong);
@@ -26,15 +26,23 @@ JNIEXPORT void JNICALL Java_com_apical_cdr_UsbCam_nativeClose
 /*
  * Class:     com_apical_cdr_UsbCam
  * Method:    nativeSetPreviewSurface
- * Signature: (ILjava/lang/Object;II)V
+ * Signature: (JLjava/lang/Object;)V
  */
 JNIEXPORT void JNICALL Java_com_apical_cdr_UsbCam_nativeSetPreviewSurface
-  (JNIEnv *, jclass, jlong, jobject, jint, jint);
+  (JNIEnv *, jclass, jlong, jobject);
+
+/*
+ * Class:     com_apical_cdr_UsbCam
+ * Method:    nativeSetPreviewTexture
+ * Signature: (JLjava/lang/Object;)V
+ */
+JNIEXPORT void JNICALL Java_com_apical_cdr_UsbCam_nativeSetPreviewTexture
+  (JNIEnv *, jclass, jlong, jobject);
 
 /*
  * Class:     com_apical_cdr_UsbCam
  * Method:    nativeStartPreview
- * Signature: (I)V
+ * Signature: (J)V
  */
 JNIEXPORT void JNICALL Java_com_apical_cdr_UsbCam_nativeStartPreview
   (JNIEnv *, jclass, jlong);
@@ -42,7 +50,7 @@ JNIEXPORT void JNICALL Java_com_apical_cdr_UsbCam_nativeStartPreview
 /*
  * Class:     com_apical_cdr_UsbCam
  * Method:    nativeStopPreview
- * Signature: (I)V
+ * Signature: (J)V
  */
 JNIEXPORT void JNICALL Java_com_apical_cdr_UsbCam_nativeStopPreview
   (JNIEnv *, jclass, jlong);
