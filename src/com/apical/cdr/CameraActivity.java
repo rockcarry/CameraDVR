@@ -309,17 +309,19 @@ public class CameraActivity extends Activity
 
     private void updateCameraSwitchPreviewUI() {
         int state = mRecServ.getCamSwitchState();
-        mCamMainPreview.setVisibility(View.GONE);
-        mCamUsbPreview .setVisibility(View.GONE);
         switch (state) {
         case 0: // ab
-            mCamUsbPreview .setLayoutParams(mCamUsbPreviewLayoutParams );
+            mCamMainPreview.setVisibility(View.INVISIBLE);
+            mCamUsbPreview .setVisibility(View.INVISIBLE);
             mCamMainPreview.setLayoutParams(mCamMainPreviewLayoutParams);
+            mCamUsbPreview .setLayoutParams(mCamUsbPreviewLayoutParams );
             mCamUsbPreview .bringToFront();
             mCamMainPreview.setVisibility(View.VISIBLE);
             mCamUsbPreview .setVisibility(View.VISIBLE);
             break;
         case 1: // ba
+            mCamMainPreview.setVisibility(View.INVISIBLE);
+            mCamUsbPreview .setVisibility(View.INVISIBLE);
             mCamUsbPreview .setLayoutParams(mCamMainPreviewLayoutParams);
             mCamMainPreview.setLayoutParams(mCamUsbPreviewLayoutParams );
             mCamMainPreview.bringToFront();
@@ -327,11 +329,13 @@ public class CameraActivity extends Activity
             mCamUsbPreview .setVisibility(View.VISIBLE);
             break;
         case 2: // a
+            mCamUsbPreview .setVisibility(View.INVISIBLE);
             mCamMainPreview.setLayoutParams(mCamMainPreviewLayoutParams);
             mCamMainPreview.bringToFront();
             mCamMainPreview.setVisibility(View.VISIBLE);
             break;
         case 3: // b
+            mCamMainPreview.setVisibility(View.INVISIBLE);
             mCamUsbPreview .setLayoutParams(mCamMainPreviewLayoutParams);
             mCamUsbPreview .bringToFront();
             mCamUsbPreview .setVisibility(View.VISIBLE);
@@ -359,6 +363,9 @@ public class CameraActivity extends Activity
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
             Log.d(TAG, "surfaceChanged");
+            if (mRecServ != null) {
+//              mRecServ.setPreviewSurfaceHolderMainCam(holder);
+            }
         }
     };
 
@@ -382,6 +389,9 @@ public class CameraActivity extends Activity
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
             Log.d(TAG, "surfaceChanged");
+            if (mRecServ != null) {
+//              mRecServ.setPreviewSurfaceHolderUsbCam(holder);
+            }
         }
     };
 
