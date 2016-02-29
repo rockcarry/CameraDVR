@@ -31,12 +31,7 @@ public class UsbCam {
     }
 
     public void setPreviewTexture(SurfaceTexture texture) {
-        if (texture != null) {
-            nativeSetPreviewTexture(m_hUsbCamNative, texture);
-        }
-        else {
-            nativeSetPreviewTexture(m_hUsbCamNative, null);
-        }
+        nativeSetPreviewTexture(m_hUsbCamNative, texture);
     }
 
     public void startPreview() {

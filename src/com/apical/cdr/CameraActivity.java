@@ -28,7 +28,7 @@ public class CameraActivity extends Activity
     private static final String TAG = "CameraActivity";
 
     private int            mCurCamMain = 0;
-    private int            mCurCamUsb  = 2;
+    private int            mCurCamUsb  = 1;
     private TextureView    mCamMainPreview;
     private TextureView    mCamUsbPreview;
     private View           mFlashView;

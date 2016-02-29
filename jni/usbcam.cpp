@@ -69,7 +69,6 @@ static void* video_render_thread_proc(void *param)
                                 *p++ = (rand() % 0xffffff);
                             }
                         }
-                        usleep(50* 1000);
                     }
                     mapper.unlock(buf->handle);
                 }
@@ -77,6 +76,10 @@ static void* video_render_thread_proc(void *param)
                 if ((err = cam->cur_win->queueBuffer(cam->cur_win.get(), buf, -1)) != 0) {
                     ALOGW("Surface::queueBuffer returned error %d", err);
                 }
+            }
+
+            if (!len) {
+                usleep(50* 1000);
             }
         }
 
