@@ -1,3 +1,1 @@
-
 CONFIG_HW_PLAT := a31
-

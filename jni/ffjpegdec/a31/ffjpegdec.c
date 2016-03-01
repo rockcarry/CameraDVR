@@ -1,6 +1,6 @@
 // 包含头文件
+#include <ffjpegdec.h>
 #include "LibveDecoder.h"
-#include "../ffjpegdec.h"
 
 // 函数实现
 void* ffjpegdec_init(void)
