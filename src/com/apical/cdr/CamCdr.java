@@ -12,7 +12,11 @@ public class CamCdr {
     private int  m_nCamCdrDevID ;
     private long m_hCamCdrNative;
 
-    public static CamCdr open(String dev, int sub, int w, int h) {
+    public static int CAMCDR_PIXFMT_AUTO  = 0x0;
+    public static int CAMCDR_PIXFMT_YUYV  = 0x56595559;
+    public static int CAMCDR_PIXFMT_MJPEG = 0x47504a4d;
+
+    public static CamCdr open(String dev, int sub, int fmt, int w, int h) {
         boolean devused = false;
         int     freeidx = 0;
         for (int i=0; i<sCamCdrListDev.length; i++) {
@@ -30,7 +34,7 @@ public class CamCdr {
         sCamCdrListDev [freeidx] = new String(dev);
         sCamCdrListInst[freeidx] = new CamCdr();
         sCamCdrListInst[freeidx].m_nCamCdrDevID  = freeidx;
-        sCamCdrListInst[freeidx].m_hCamCdrNative = sCamCdrListInst[freeidx].nativeInit(dev, sub, w, h);
+        sCamCdrListInst[freeidx].m_hCamCdrNative = sCamCdrListInst[freeidx].nativeInit(dev, sub, fmt, w, h);
         return sCamCdrListInst[freeidx];
     }
 
@@ -65,7 +69,7 @@ public class CamCdr {
         sCamCdrListInst[m_nCamCdrDevID] = null;
     }
 
-    private static native long nativeInit (String dev, int sub, int w, int h);
+    private static native long nativeInit (String dev, int sub, int fmt, int w, int h);
     private static native void nativeClose(long hCamCdr);
     private static native void nativeSetPreviewSurface(long hCamCdr, Object surface);
     private static native void nativeSetPreviewTexture(long hCamCdr, Object surface);

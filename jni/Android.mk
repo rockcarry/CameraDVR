@@ -1,8 +1,8 @@
 LOCAL_PATH := $(call my-dir)
 
-include $(LOCAL_PATH)/Config.mk
-
 include $(CLEAR_VARS)
+
+include $(LOCAL_PATH)/Config.mk
 
 LOCAL_MODULE_TAGS := optional
 
@@ -23,15 +23,15 @@ LOCAL_SHARED_LIBRARIES := \
     libgui \
     libandroid_runtime
 
-ifeq ($(CONFIG_HW_PLAT),a31)
+ifeq ($(CONFIG_FFJPEGDEC_TYPE),a31)
 LOCAL_C_INCLUDES += \
     frameworks/av/media/CedarX-Projects/CedarX/include \
     frameworks/av/media/CedarX-Projects/CedarX/include/include_system
 
 LOCAL_SRC_FILES += \
-    ffjpegdec/$(CONFIG_HW_PLAT)/ffjpegdec.c \
-    ffjpegdec/$(CONFIG_HW_PLAT)/LibveDecoder.c \
-    ffjpegdec/$(CONFIG_HW_PLAT)/formatconvert.c
+    ffjpegdec/$(CONFIG_FFJPEGDEC_TYPE)/ffjpegdec.c \
+    ffjpegdec/$(CONFIG_FFJPEGDEC_TYPE)/LibveDecoder.c \
+    ffjpegdec/$(CONFIG_FFJPEGDEC_TYPE)/formatconvert.c
 
 LOCAL_SHARED_LIBRARIES += \
     libsunxi_alloc \
@@ -40,12 +40,12 @@ LOCAL_SHARED_LIBRARIES += \
     libcedarv
 endif
 
-ifeq ($(CONFIG_HW_PLAT),libjpeg)
+ifeq ($(CONFIG_FFJPEGDEC_TYPE),ljp)
 LOCAL_C_INCLUDES += \
     external/jpeg
 
 LOCAL_SRC_FILES += \
-    ffjpegdec/$(CONFIG_HW_PLAT)/ffjpegdec.c
+    ffjpegdec/$(CONFIG_FFJPEGDEC_TYPE)/ffjpegdec.c
 
 LOCAL_SHARED_LIBRARIES += \
     libjpeg

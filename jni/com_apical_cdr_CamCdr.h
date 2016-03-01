@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     com_apical_cdr_CamCdr
  * Method:    nativeInit
- * Signature: (Ljava/lang/String;III)J
+ * Signature: (Ljava/lang/String;IIII)J
  */
 JNIEXPORT jlong JNICALL Java_com_apical_cdr_CamCdr_nativeInit
-  (JNIEnv *, jclass, jstring, jint, jint, jint);
+  (JNIEnv *, jclass, jstring, jint, jint, jint, jint);
 
 /*
  * Class:     com_apical_cdr_CamCdr

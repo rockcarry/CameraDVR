@@ -382,7 +382,7 @@ public class RecordService extends Service implements
         }
 
         // open camera
-        mCamDevUsb = CamCdr.open("/dev/video" + usbcam, 0, 0, 0);
+        mCamDevUsb = CamCdr.open("/dev/video" + usbcam, 0, CamCdr.CAMCDR_PIXFMT_MJPEG, 0, 0);
         //-- for usb camera
     }
 

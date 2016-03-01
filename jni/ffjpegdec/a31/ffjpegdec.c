@@ -2,6 +2,9 @@
 #include <ffjpegdec.h>
 #include "LibveDecoder.h"
 
+// 内部常量定义
+#define DO_USE_VAR(v) do { v = v; } while (0)
+
 // 函数实现
 void* ffjpegdec_init(void)
 {
@@ -13,8 +16,9 @@ void ffjpegdec_decode(void *decoder, void *buf, int len, int pts)
     libveDecode((DecodeHandle*)decoder, buf, len, pts, NULL);
 }
 
-void ffjpegdec_getframe(void *decoder, void *buf, int w, int h)
+void ffjpegdec_getframe(void *decoder, void *buf, int w, int h, int stride)
 {
+    DO_USE_VAR(stride);
     libveGetFrame((DecodeHandle*)decoder, buf, w, h, NULL);
 }
 

@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <jpeglib.h>
 #include <ffjpegdec.h>
+#include <utils/Log.h>
 
 // 内部常量定义
 #define DO_USE_VAR(v) do { v = v; } while (0)
@@ -41,6 +42,16 @@ static void jpeg_buffer_src(j_decompress_ptr cinfo, void *buf, int size)
     src->next_input_byte = buf;
 }
 
+static void scale_scanline(uint8_t *dst, int dw, uint8_t *src, int sw)
+{
+    uint32_t *src32 = (uint32_t*)src;
+    uint32_t *dst32 = (uint32_t*)dst;
+    int i;
+    for (i=0; i<dw; i++) {
+        dst32[i] = src32[i * sw / dw];
+    }
+}
+
 typedef struct {
     struct jpeg_decompress_struct cinfo;
     struct jpeg_error_mgr jerr;
@@ -68,35 +79,52 @@ void ffjpegdec_decode(void *decoder, void *buf, int len, int pts)
     CONTEXT *context = (CONTEXT*)decoder;
     jpeg_buffer_src(&context->cinfo, buf, len);
     jpeg_read_header(&context->cinfo, TRUE);
-    if (0) {
-        context->cinfo.out_color_space = JCS_YCbCr;
-        context->cinfo.raw_data_out = TRUE;
-        context->cinfo.do_fancy_upsampling = FALSE;
-    }
-    else {
-        context->cinfo.out_color_space = JCS_RGBA_8888;
-    }
+    context->cinfo.out_color_space = JCS_RGBA_8888;
     jpeg_start_decompress(&context->cinfo);
     DO_USE_VAR(pts);
 }
 
-void ffjpegdec_getframe(void *decoder, void *buf, int w, int h)
+void ffjpegdec_getframe(void *decoder, void *buf, int w, int h, int stride)
 {
-    CONTEXT *context = (CONTEXT*)decoder;
-
-    int row_stride = context->cinfo.output_width * context->cinfo.output_components;
-    uint8_t *dst_buf = (uint8_t*)buf;
+    CONTEXT *context  = (CONTEXT*)decoder;
+    int src_stride    = context->cinfo.output_width * context->cinfo.output_components;
+    int dst_stride    = stride;
+    uint8_t *dst_buf  = (uint8_t*)buf;
+    int      dst_cury = 0;
+    int      dst_newy = 0;
     JSAMPROW dst_row;
 
-    if (w == (int)context->cinfo.output_width && h == (int)context->cinfo.output_height) {
-        while (context->cinfo.output_scanline < context->cinfo.output_height) {
+    while (context->cinfo.output_scanline < context->cinfo.output_height) {
+        if (w == (int)context->cinfo.output_width) {
+            dst_newy = context->cinfo.output_scanline * h / context->cinfo.output_height;
             dst_row = (uint8_t*)dst_buf;
             jpeg_read_scanlines(&context->cinfo, &dst_row, 1);
-            dst_buf += row_stride;
+            if (dst_cury != dst_newy) {
+                dst_buf += dst_stride;
+                dst_cury++;
+            }
+            while (dst_cury < dst_newy) {
+                memcpy(dst_buf, dst_buf - dst_stride, dst_stride);
+                dst_buf += dst_stride;
+                dst_cury++;
+            }
         }
-    }
-    else {
-        // todo...
+        else {
+            uint8_t tmp_buf[src_stride];
+            dst_newy = context->cinfo.output_scanline * h / context->cinfo.output_height;
+            dst_row = (uint8_t*)tmp_buf;
+            jpeg_read_scanlines(&context->cinfo, &dst_row, 1);
+            if (dst_cury != dst_newy) {
+                scale_scanline(dst_buf, w, tmp_buf, context->cinfo.output_width);
+                dst_buf += dst_stride;
+                dst_cury++;
+            }
+            while (dst_cury < dst_newy) {
+                scale_scanline(dst_buf, w, tmp_buf, context->cinfo.output_width);
+                dst_buf += dst_stride;
+                dst_cury++;
+            }
+        }
     }
 
     jpeg_finish_decompress(&context->cinfo);

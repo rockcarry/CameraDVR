@@ -22,7 +22,6 @@ struct video_buffer{
 };
 
 typedef struct {
-
     struct v4l2_format      fmt;
     struct v4l2_buffer      buf;
     struct video_buffer     vbs[VIDEO_CAPTURE_BUFFER_COUNT];
@@ -41,7 +40,7 @@ typedef struct {
 } CAMCDR;
 
 // º¯Êý¶¨Òå
-CAMCDR* camcdr_init (const char *dev, int sub, int w, int h);
+CAMCDR* camcdr_init (const char *dev, int sub, int fmt, int w, int h);
 void    camcdr_close(CAMCDR *cam);
 void    camcdr_set_preview_window(CAMCDR *cam, const sp<ANativeWindow> win);
 void    camcdr_set_preview_target(CAMCDR *cam, const sp<IGraphicBufferProducer>& gbp);

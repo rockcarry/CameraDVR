@@ -10,13 +10,13 @@
 /*
  * Class:     com_apical_cdr_CamCdr
  * Method:    nativeInit
- * Signature: (Ljava/lang/String;III)J
+ * Signature: (Ljava/lang/String;IIII)J
  */
 JNIEXPORT jlong JNICALL Java_com_apical_cdr_CamCdr_nativeInit
-  (JNIEnv *env, jclass cls, jstring dev, jint sub, jint w, jint h) {
+  (JNIEnv *env, jclass cls, jstring dev, jint sub, jint fmt, jint w, jint h) {
     DO_USE_VAR(env);
     DO_USE_VAR(cls);
-    return (jlong) camcdr_init(env->GetStringUTFChars(dev, NULL), sub, w, h);
+    return (jlong) camcdr_init(env->GetStringUTFChars(dev, NULL), sub, fmt, w, h);
 }
 
 /*
