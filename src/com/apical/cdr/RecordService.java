@@ -39,7 +39,7 @@ public class RecordService extends Service implements
 
     private RecordBinder    mBinder        = null;
     private Camera          mCamDevMain    = null;
-    private UsbCam          mCamDevUsb     = null;
+    private CamCdr          mCamDevUsb     = null;
     private MediaRecorder   mRecorder      = null;
     private boolean         mRecording     = false;
     private MediaSaver      mMediaSaver    = null;
@@ -382,7 +382,7 @@ public class RecordService extends Service implements
         }
 
         // open camera
-        mCamDevUsb = UsbCam.open(usbcam);
+        mCamDevUsb = CamCdr.open("/dev/video" + usbcam, 0, 0, 0);
         //-- for usb camera
     }
 

@@ -152,6 +152,8 @@ public class CameraActivity extends Activity
 
         if (mRecServ != null) {
             mRecServ.onResume();
+//          mRecServ.setCamMainPreviewTexture(mCamMainTexture);
+//          mRecServ.setCamUsbPreviewTexture (mCamUsbTexture);
         }
 
         showUIControls(true );
@@ -163,6 +165,8 @@ public class CameraActivity extends Activity
         super.onPause();
         if (mRecServ != null) {
             mRecServ.onPause();
+//          mRecServ.setCamMainPreviewTexture(null);
+//          mRecServ.setCamUsbPreviewTexture (null);
         }
     }
 

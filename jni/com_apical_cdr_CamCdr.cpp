@@ -2,41 +2,41 @@
 #include <android_runtime/android_graphics_SurfaceTexture.h>
 #include <android_runtime/android_view_Surface.h>
 
-#include "com_apical_cdr_UsbCam.h"
-#include "usbcam.h"
+#include "com_apical_cdr_CamCdr.h"
+#include "camcdr.h"
 
 #define DO_USE_VAR(v) do { v = v; } while (0)
 
 /*
- * Class:     com_apical_cdr_UsbCam
+ * Class:     com_apical_cdr_CamCdr
  * Method:    nativeInit
- * Signature: (Ljava/lang/String;)J
+ * Signature: (Ljava/lang/String;III)J
  */
-JNIEXPORT jlong JNICALL Java_com_apical_cdr_UsbCam_nativeInit
-  (JNIEnv *env, jclass cls, jstring dev) {
+JNIEXPORT jlong JNICALL Java_com_apical_cdr_CamCdr_nativeInit
+  (JNIEnv *env, jclass cls, jstring dev, jint sub, jint w, jint h) {
     DO_USE_VAR(env);
     DO_USE_VAR(cls);
-    return (jlong) usbcam_init(env->GetStringUTFChars(dev, NULL));
+    return (jlong) camcdr_init(env->GetStringUTFChars(dev, NULL), sub, w, h);
 }
 
 /*
- * Class:     com_apical_cdr_UsbCam
+ * Class:     com_apical_cdr_CamCdr
  * Method:    nativeClose
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_com_apical_cdr_UsbCam_nativeClose
+JNIEXPORT void JNICALL Java_com_apical_cdr_CamCdr_nativeClose
   (JNIEnv *env, jclass cls, jlong dev) {
     DO_USE_VAR(env);
     DO_USE_VAR(cls);
-    usbcam_close((USBCAM*)dev);
+    camcdr_close((CAMCDR*)dev);
 }
 
 /*
- * Class:     com_apical_cdr_UsbCam
+ * Class:     com_apical_cdr_CamCdr
  * Method:    nativeSetPreviewSurface
  * Signature: (JLjava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_com_apical_cdr_UsbCam_nativeSetPreviewSurface
+JNIEXPORT void JNICALL Java_com_apical_cdr_CamCdr_nativeSetPreviewSurface
   (JNIEnv *env, jclass cls, jlong dev, jobject jsurface) {
     DO_USE_VAR(env);
     DO_USE_VAR(cls);
@@ -50,15 +50,15 @@ JNIEXPORT void JNICALL Java_com_apical_cdr_UsbCam_nativeSetPreviewSurface
         }
     }
 
-    usbcam_set_preview_target((USBCAM*)dev, gbp);
+    camcdr_set_preview_target((CAMCDR*)dev, gbp);
 }
 
 /*
- * Class:     com_apical_cdr_UsbCam
+ * Class:     com_apical_cdr_CamCdr
  * Method:    nativeSetPreviewTexture
  * Signature: (JLjava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_com_apical_cdr_UsbCam_nativeSetPreviewTexture
+JNIEXPORT void JNICALL Java_com_apical_cdr_CamCdr_nativeSetPreviewTexture
   (JNIEnv *env, jclass cls, jlong dev, jobject jtexture) {
     DO_USE_VAR(env);
     DO_USE_VAR(cls);
@@ -72,29 +72,29 @@ JNIEXPORT void JNICALL Java_com_apical_cdr_UsbCam_nativeSetPreviewTexture
         }
     }
 
-    usbcam_set_preview_target((USBCAM*)dev, gbp);
+    camcdr_set_preview_target((CAMCDR*)dev, gbp);
 }
 
 /*
- * Class:     com_apical_cdr_UsbCam
+ * Class:     com_apical_cdr_CamCdr
  * Method:    nativeStartPreview
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_com_apical_cdr_UsbCam_nativeStartPreview
+JNIEXPORT void JNICALL Java_com_apical_cdr_CamCdr_nativeStartPreview
   (JNIEnv *env, jclass cls, jlong dev) {
     DO_USE_VAR(env);
     DO_USE_VAR(cls);
-    usbcam_start_preview((USBCAM*)dev);
+    camcdr_start_preview((CAMCDR*)dev);
 }
 
 /*
- * Class:     com_apical_cdr_UsbCam
+ * Class:     com_apical_cdr_CamCdr
  * Method:    nativeStopPreview
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_com_apical_cdr_UsbCam_nativeStopPreview
+JNIEXPORT void JNICALL Java_com_apical_cdr_CamCdr_nativeStopPreview
   (JNIEnv *env, jclass cls, jlong dev) {
     DO_USE_VAR(env);
     DO_USE_VAR(cls);
-    usbcam_start_preview((USBCAM*)dev);
+    camcdr_start_preview((CAMCDR*)dev);
 }
