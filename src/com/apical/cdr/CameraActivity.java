@@ -353,6 +353,10 @@ public class CameraActivity extends Activity
 
         @Override
         public boolean onSurfaceTextureDestroyed(SurfaceTexture texture) {
+            mCamMainTexture = null;
+            if (mRecServ != null) {
+                mRecServ.setCamMainPreviewTexture(null);
+            }
             return true;
         }
 
@@ -377,6 +381,10 @@ public class CameraActivity extends Activity
 
         @Override
         public boolean onSurfaceTextureDestroyed(SurfaceTexture texture) {
+            mCamUsbTexture = null;
+            if (mRecServ != null) {
+                mRecServ.setCamUsbPreviewTexture(null);
+            }
             return true;
         }
 
