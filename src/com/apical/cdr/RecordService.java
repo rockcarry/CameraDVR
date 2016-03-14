@@ -10,6 +10,7 @@ import android.media.MediaRecorder;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.os.SystemProperties;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -52,17 +53,23 @@ public class RecordService extends Service implements
     private CameraActivity  mActivity      = null;
     private boolean         mTakePhotoInProgress = false;
     private long            mRecordingStartTime  = Long.MAX_VALUE;
-
+    private long            mImpactStartTime     = Long.MAX_VALUE;
+    private boolean         mImpactEventFlag     = false;
     private boolean         mRecMicMuted    = false;
-    private int             mCamSwitchState = Settings.get(Settings.KEY_CAMERA_SWITCH_STATE_VALUE, Settings.DEF_CAMERA_SWITCH_STATE_VALUE);
+    private int             mCamSwitchState = 0;
+
+    private PowerManager.WakeLock mWakeLock;
 
     @Override
     public void onCreate() {
         Log.d(TAG, "onCreate");
 
+        Settings.init(this);
+        mCamSwitchState = Settings.get(Settings.KEY_CAMERA_SWITCH_STATE_VALUE, Settings.DEF_CAMERA_SWITCH_STATE_VALUE);
+
         mBinder      = new RecordBinder ();
         mRecorder    = new MediaRecorder();
-        mMediaSaver  = new MediaSaver (this, mGSensorImpactListener);
+        mMediaSaver  = new MediaSaver(this);
 
         // gsensor monitor
         mGSensorMon = new GSensorMonitor(this, mGSensorImpactListener);
@@ -88,6 +95,14 @@ public class RecordService extends Service implements
         mSdManager = new SdcardManager(this, mMediaSaver, new SdcardManager.SdStateChangeListener() {
             @Override
             public void onSdStateChanged(boolean insert) {
+                if (insert) {
+                    if (Settings.get(Settings.KEY_INSERTSD_AUTO_RECORD, Settings.DEF_INSERTSD_AUTO_RECORD) == 1) {
+                        startRecording();
+                    }
+                }
+                else {
+                    stopRecording();
+                }
                 if (mActivity != null) {
                     mActivity.onSdStateChanged(insert);
                 }
@@ -100,11 +115,25 @@ public class RecordService extends Service implements
         // float window
         mFloatWin = new FloatWindow(this);
         mFloatWin.create();
+        mFloatWin.showFloat(mRecording);
+
+        // for wake lock
+        PowerManager pm = (PowerManager)getSystemService(Context.POWER_SERVICE);
+        mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
+        mWakeLock.setReferenceCounted(false);
+
+        // select camera
+        selectCamera(Settings.DEF_CAMERA_MAIN_DEVICE_ID, Settings.DEF_CAMERA_USB_DEVICE_ID);
     }
 
     @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy");
+
+        // for wake lock
+        if (mWakeLock != null) {
+            mWakeLock.release();
+        }
 
         // hide float window
         mFloatWin.hideFloat();
@@ -113,6 +142,9 @@ public class RecordService extends Service implements
         // remove watermark updater
         mHandler.removeCallbacks(mWaterMarkUpdater);
         SystemProperties.set("sys.watermark.msg", "");
+
+        // stop recording
+        stopRecording();
 
         if (mRecorder != null) {
             mRecorder.reset();
@@ -164,6 +196,7 @@ public class RecordService extends Service implements
 
     public boolean startRecording() {
         if (mRecording) return mRecording;
+        if (!SdcardManager.isSdcardInsert()) return mRecording;
 
         //++ for main camera
         try {
@@ -196,6 +229,8 @@ public class RecordService extends Service implements
             mRecordingStartTime = System.currentTimeMillis();
         } catch (Exception e) {
             e.printStackTrace();
+            mRecording = false;
+            return mRecording;
         }
         //-- for main camera
 
@@ -205,6 +240,9 @@ public class RecordService extends Service implements
 
         // update float window
         mFloatWin.updateFloat(mRecording);
+
+        // acquire wake lock
+        mWakeLock.acquire();
 
         return mRecording;
     }
@@ -232,6 +270,9 @@ public class RecordService extends Service implements
 
         // update float window
         mFloatWin.updateFloat(mRecording);
+
+        // release wake lock
+        mWakeLock.release();
     }
 
     public boolean isRecording() {
@@ -386,6 +427,8 @@ public class RecordService extends Service implements
         //-- for usb camera
     }
 
+    public boolean getImpactEventFlag() { return mImpactEventFlag; }
+
     public static String getNewRecordFileName(int type) {
         SdcardManager.makeCdrDirs(); // make cdr dirs
 
@@ -421,6 +464,13 @@ public class RecordService extends Service implements
             mRecordingStartTime = Long.MAX_VALUE;
             stopRecording ();
             startRecording();
+
+            // update impact event
+            if (System.currentTimeMillis() - mImpactStartTime > 1000) {
+                mImpactEventFlag = false;
+                mMediaSaver.onGsensorImpactEvent(mImpactEventFlag);
+                mActivity  .onGsensorImpactEvent(mImpactEventFlag);
+            }
         }
     }
 
@@ -439,17 +489,13 @@ public class RecordService extends Service implements
         }
     };
 
-    GSensorMonitor.ImpactListener mGSensorImpactListener = new GSensorMonitor.ImpactListener() {
+    GSensorMonitor.ImpactEventListener mGSensorImpactListener = new GSensorMonitor.ImpactEventListener() {
         @Override
-        public void onGsensorImpactStart() {
-            mMediaSaver.setGsensorImpactFlag(true);
-            mActivity.updateImpactLockView();
-        }
-
-        @Override
-        public void onGsensorImpactDone() {
-            mMediaSaver.setGsensorImpactFlag(false);
-            mActivity.updateImpactLockView();
+        public void onGsensorImpactEvent(boolean flag) {
+            mImpactEventFlag = true;
+            mImpactStartTime = System.currentTimeMillis();
+            mMediaSaver.onGsensorImpactEvent(mImpactEventFlag);
+            mActivity  .onGsensorImpactEvent(mImpactEventFlag);
         }
     };
 }

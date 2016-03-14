@@ -9,7 +9,6 @@ import android.graphics.SurfaceTexture;
 import android.os.IBinder;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.PowerManager;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
@@ -23,38 +22,39 @@ import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 
 public class CameraActivity extends Activity
-    implements View.OnClickListener, View.OnLongClickListener, SdcardManager.SdStateChangeListener
+    implements View.OnClickListener,
+               View.OnLongClickListener,
+               SdcardManager.SdStateChangeListener,
+               GSensorMonitor.ImpactEventListener
 {
     private static final String TAG = "CameraActivity";
 
-    private int            mCurCamMain = 0;
-    private int            mCurCamUsb  = 1;
-    private TextureView    mCamMainPreview;
-    private TextureView    mCamUsbPreview;
-    private View           mFlashView;
-    private RelativeLayout mCamVideoUI;
-    private ImageView      mBtnGallery;
-    private ImageView      mBtnSettings;
-    private ImageView      mBtnShutter;
-    private ImageView      mBtnMuteSW;
-    private ImageView      mBtnCameraSW;
-    private ImageView      mImpactLock;
-    private TextView       mTxtRecTime;
-    private AnimationManager   mAnimManager;
-    private PowerManager.WakeLock mWakeLock;
+    private TextureView      mCamMainPreview;
+    private TextureView      mCamUsbPreview;
+    private View             mFlashView;
+    private RelativeLayout   mCamVideoUI;
+    private ImageView        mBtnGallery;
+    private ImageView        mBtnSettings;
+    private ImageView        mBtnShutter;
+    private ImageView        mBtnMuteSW;
+    private ImageView        mBtnCameraSW;
+    private ImageView        mImpactLock;
+    private TextView         mTxtRecTime;
+    private AnimationManager mAnimManager;
+
     Handler mHandler = new Handler();
 
     private FrameLayout.LayoutParams mCamMainPreviewLayoutParams;
-    private FrameLayout.LayoutParams mCamUsbPreviewLayoutParams;
+    private FrameLayout.LayoutParams mCamUsbPreviewLayoutParams ;
 
     private RecordService mRecServ = null;
     private ServiceConnection mRecServiceConn = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder serv) {
             mRecServ = ((RecordService.RecordBinder)serv).getService(CameraActivity.this);
-            mRecServ.selectCamera(mCurCamMain, mCurCamUsb);
             mRecServ.setCamMainPreviewTexture(mCamMainTexture);
             mRecServ.setCamUsbPreviewTexture (mCamUsbTexture );
+            mRecServ.onResume();
             updateCameraSwitchPreviewUI();
             updateButtonsState();
         }
@@ -71,9 +71,6 @@ public class CameraActivity extends Activity
         Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-
-        // init settings
-        Settings.init(this);
 
         mCamMainPreview = (TextureView)findViewById(R.id.camera_main_preview);
         mCamMainPreview.setSurfaceTextureListener(mCamMainSurfaceTextureListener);
@@ -110,11 +107,6 @@ public class CameraActivity extends Activity
 
         mAnimManager = new AnimationManager();
 
-        // for wake lock
-        PowerManager pm = (PowerManager)getSystemService(Context.POWER_SERVICE);
-        mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
-        mWakeLock.setReferenceCounted(false);
-
         // audo hide controls
         showUIControls(false);
     }
@@ -123,20 +115,12 @@ public class CameraActivity extends Activity
     public void onDestroy() {
         Log.d(TAG, "onDestroy");
 
-        // stop recording
-        mRecServ.stopRecording();
-
         // unbind record service
         unbindService(mRecServiceConn);
 
         // stop record service
         Intent i = new Intent(CameraActivity.this, RecordService.class);
         stopService(i);
-
-        // for wake lock
-        if (mWakeLock != null) {
-            mWakeLock.release();
-        }
 
         mHandler.removeCallbacks(mRecordingTimeUpdater);
         mHandler.removeCallbacks(mUIControlsHider     );
@@ -149,11 +133,10 @@ public class CameraActivity extends Activity
         super.onResume();
 
         updateButtonsState();
+        updateImpactLockView();
 
         if (mRecServ != null) {
             mRecServ.onResume();
-//          mRecServ.setCamMainPreviewTexture(mCamMainTexture);
-//          mRecServ.setCamUsbPreviewTexture (mCamUsbTexture);
         }
 
         showUIControls(true );
@@ -165,8 +148,6 @@ public class CameraActivity extends Activity
         super.onPause();
         if (mRecServ != null) {
             mRecServ.onPause();
-//          mRecServ.setCamMainPreviewTexture(null);
-//          mRecServ.setCamUsbPreviewTexture (null);
         }
     }
 
@@ -207,9 +188,6 @@ public class CameraActivity extends Activity
                     }
                 });
             }
-            else {
-                // todo..
-            }
             return true;
         }
         return false;
@@ -226,39 +204,11 @@ public class CameraActivity extends Activity
 
     @Override
     public void onSdStateChanged(boolean insert) {
-        startRecording(insert);
-    }
-
-    public void updateImpactLockView() {
-        boolean impact = mRecServ.getMediaSaver().getGsensorImpactFlag();
-        if (mRecServ.isRecording() && impact) {
-            mImpactLock.setVisibility(View.VISIBLE);
-        }
-        else {
-            mImpactLock.setVisibility(View.GONE);
-        }
-    }
-
-    private void startRecording(boolean start) {
-        if (start) {
-            if (SdcardManager.isSdcardInsert()){
-                if (mRecServ.startRecording()) {
-                    mWakeLock.acquire(); // acquire wake lock
-                    mHandler.post(mRecordingTimeUpdater);
-                    mTxtRecTime.setVisibility(View.VISIBLE);
-                }
-            }
-            else {
-                // todo..
-            }
-        }
-        else {
-            mHandler.removeCallbacks(mRecordingTimeUpdater);
-            mTxtRecTime.setVisibility(View.GONE);
-            mRecServ.stopRecording();
-            mWakeLock.release(); // release wake lock
-        }
         updateButtonsState();
+    }
+
+    @Override
+    public void onGsensorImpactEvent(boolean flag) {
         updateImpactLockView();
     }
 
@@ -267,18 +217,51 @@ public class CameraActivity extends Activity
         updateButtonsState();
     }
 
+    private void startRecording(boolean start) {
+        if (start) {
+            if (SdcardManager.isSdcardInsert()){
+                mRecServ.startRecording();
+            }
+        }
+        else {
+            mRecServ.stopRecording();
+        }
+        updateButtonsState();
+        updateImpactLockView();
+    }
+
     private void switchCamera() {
         mRecServ.switchCamera();
         updateCameraSwitchPreviewUI();
         updateButtonsState();
     }
 
+    private void updateImpactLockView() {
+        boolean impact = (mRecServ != null) && mRecServ.isRecording() && mRecServ.getImpactEventFlag();
+        if (impact) {
+            mImpactLock.setVisibility(View.VISIBLE);
+        }
+        else {
+            mImpactLock.setVisibility(View.GONE);
+        }
+    }
+
     private void updateButtonsState() {
         if (mRecServ != null && mRecServ.isRecording()) {
             mBtnShutter.setImageResource(R.drawable.btn_new_shutter_recording);
+
+            //++ for recording indicator
+            mHandler.post(mRecordingTimeUpdater);
+            mTxtRecTime.setVisibility(View.VISIBLE);
+            //-- for recording indicator
         }
         else {
             mBtnShutter.setImageResource(R.drawable.btn_new_shutter_video);
+
+            //++ for recording indicator
+            mHandler.removeCallbacks(mRecordingTimeUpdater);
+            mTxtRecTime.setVisibility(View.GONE);
+            //-- for recording indicator
         }
 
         if (mRecServ != null && mRecServ.getRecMicMuted()) {

@@ -133,8 +133,10 @@ void ffjpegdec_getframe(void *decoder, void *buf, int w, int h, int stride)
 void ffjpegdec_free(void *decoder)
 {
     CONTEXT *context = (CONTEXT*)decoder;
-    jpeg_destroy_decompress((struct jpeg_decompress_struct*)decoder);
-    free(context);
+    if (decoder) {
+        jpeg_destroy_decompress((struct jpeg_decompress_struct*)decoder);
+        free(context);
+    }
 }
 
 

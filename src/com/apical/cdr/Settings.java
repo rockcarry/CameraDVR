@@ -4,6 +4,11 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 public class Settings {
+    //++ settings for camera device id
+    public static final int DEF_CAMERA_MAIN_DEVICE_ID = 0;
+    public static final int DEF_CAMERA_USB_DEVICE_ID  = 1;
+    //-- settings for camera device id
+
     //++ settings for float button
     public static final String KEY_FLOAT_BTN_POS_X    = "CDR_FLOAT_BTN_POS_X";
     public static final String KEY_FLOAT_BTN_POS_Y    = "CDR_FLOAT_BTN_POS_Y";
@@ -24,8 +29,19 @@ public class Settings {
 
     //++ settings for back key handler
     public static final String KEY_HANDLE_BACK_KEY_TYPE = "KEY_HANDLE_BACK_KEY_TYPE";
-    public static final int DEF_HANDLE_BACK_KEY_TYPE = 1;
+    public static final int DEF_HANDLE_BACK_KEY_TYPE = 1; // 0 - finish activity and stop record service
+                                                          // 1 - hide activity only
     //-- settings for back key handler
+
+    //++ settings for power on auto record
+    public static final String KEY_POWERON_AUTO_RECORD = "KEY_POWERON_AUTO_RECORD";
+    public static final int DEF_POWERON_AUTO_RECORD = 0;
+    //-- settings for power on auto record
+
+    //++ settings for insert sdcard auto record
+    public static final String KEY_INSERTSD_AUTO_RECORD = "KEY_INSERTSD_AUTO_RECORD";
+    public static final int DEF_INSERTSD_AUTO_RECORD = 1;
+    //-- settings for insert sdcard auto record
 
     private static final String TAG = "GSensorMonitor";
     private static final String CDR_SETTINGS_SHARED_PREFS = "CDR_SETTINGS_SHARED_PREFS";

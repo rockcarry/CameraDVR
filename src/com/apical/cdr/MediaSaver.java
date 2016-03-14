@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * A class implementing {@link com.android.camera.app.MediaSaver}.
  */
-public class MediaSaver {
+public class MediaSaver implements GSensorMonitor.ImpactEventListener {
     private static final String TAG = "MediaSaver";
 
     /** The memory limit for unsaved image is 20MB. */
@@ -51,20 +51,10 @@ public class MediaSaver {
     private ContentResolver mResolver = null;
 
     // impact flag & listener
-    private boolean                       mImpactFlag     = false;
-    private GSensorMonitor.ImpactListener mImpactListener = null;
+    private boolean mImpactFlag = false;
 
-    public MediaSaver(Context context, GSensorMonitor.ImpactListener l) {
+    public MediaSaver(Context context) {
         mResolver = context.getContentResolver();
-        mImpactListener = l;
-    }
-
-    public void setGsensorImpactFlag(boolean f) {
-        mImpactFlag = f;
-    }
-
-    public boolean getGsensorImpactFlag() {
-        return mImpactFlag;
     }
 
     public void addImage(final byte[] data, String path, long date, Location loc, int width,
@@ -93,6 +83,11 @@ public class MediaSaver {
 
     public void delVideo(String path) {
         new VideoDelTask(path, mResolver).execute();
+    }
+
+    @Override
+    public void onGsensorImpactEvent(boolean f) {
+        mImpactFlag = f;
     }
 
     private class ImageSaveTask extends AsyncTask <Void, Void, Uri> {
@@ -227,7 +222,6 @@ public class MediaSaver {
                     File filenew = new File(pathnew);
                     fileold.renameTo(filenew);
                     path = pathnew;
-                    mImpactListener.onGsensorImpactDone();
                 }
 
                 values = new ContentValues();
