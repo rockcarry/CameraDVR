@@ -2,5 +2,14 @@
 2. 设置界面实现
 3. 录像回放界面实现
 4. tts 语音播报提示
-5. android mediacodec
-6. 小视频录像的实现
+5. 小视频录像的实现
+
+com.apical.cdr.action.accpwr.changed  param: state
+com.apical.cdr.action.usbcam.changed  param: state
+com.apical.cdr.action.bakcar.changed  param: state
+com.apical.cdr.action.ctrl.record     param: record_type 0 - stop, 1 - normal, 2 - lock
+com.apical.cdr.action.ctrl.takephoto  param: camera_sel  0 - main camera, 1 - usb camera
+com.apical.cdr.action.ctrl.showui     param: showui_type 0 - hide, 1 - show then auto hide, 2 - show always
+com.apical.cdr.action.ctrl.exit       param: null
+
+
