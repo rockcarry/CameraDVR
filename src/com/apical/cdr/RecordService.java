@@ -11,6 +11,7 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.os.SystemProperties;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -226,7 +227,7 @@ public class RecordService extends Service implements
             mRecorder.prepare();
             mRecorder.start();
             mRecording = true;
-            mRecordingStartTime = System.currentTimeMillis();
+            mRecordingStartTime = SystemClock.uptimeMillis();
         } catch (Exception e) {
             e.printStackTrace();
             mRecording = false;
@@ -466,7 +467,7 @@ public class RecordService extends Service implements
             startRecording();
 
             // update impact event
-            if (System.currentTimeMillis() - mImpactStartTime > 1000) {
+            if (SystemClock.uptimeMillis() - mImpactStartTime > 1000) {
                 mImpactEventFlag = false;
                 mMediaSaver.onGsensorImpactEvent(mImpactEventFlag);
                 mActivity  .onGsensorImpactEvent(mImpactEventFlag);
@@ -493,7 +494,7 @@ public class RecordService extends Service implements
         @Override
         public void onGsensorImpactEvent(boolean flag) {
             mImpactEventFlag = true;
-            mImpactStartTime = System.currentTimeMillis();
+            mImpactStartTime = SystemClock.uptimeMillis();
             mMediaSaver.onGsensorImpactEvent(mImpactEventFlag);
             mActivity  .onGsensorImpactEvent(mImpactEventFlag);
         }

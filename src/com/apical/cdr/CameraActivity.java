@@ -9,6 +9,7 @@ import android.graphics.SurfaceTexture;
 import android.os.IBinder;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
@@ -388,7 +389,7 @@ public class CameraActivity extends Activity
             mHandler.postDelayed(this, 1000);
 
             SimpleDateFormat f = new SimpleDateFormat("mm:ss");
-            long time = System.currentTimeMillis() - mRecServ.getRecordingStartTime();
+            long time = SystemClock.uptimeMillis() - mRecServ.getRecordingStartTime();
             if (time < 0 || time > mRecServ.getRecordingMaxDuration()) {
                 time = 0;
             }

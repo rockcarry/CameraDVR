@@ -82,8 +82,8 @@ public class LocationMonitor {
             try {
                 mLocationManager.requestLocationUpdates(
                         android.location.LocationManager.NETWORK_PROVIDER,
-                        1000,
-                        0F,
+                        200,
+                        10,
                         mLocationListeners[1]);
             } catch (SecurityException ex) {
                 Log.i(TAG, "fail to request location update, ignore", ex);
