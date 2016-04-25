@@ -137,12 +137,11 @@ public class FloatWindow {
     }
 
     public void updateFloat(boolean recording) {
-        if (!mDisplayed) {
-            return;
-        }
         mRecording = recording;
         mCdrButton.setBackgroundResource(mRecording ? R.drawable.cdr_float_btn_record_0 : R.drawable.cdr_float_btn_normal_0);
-        mWinMan.updateViewLayout(mFloatLayout, mLayoutParams);
+        if (mDisplayed) {
+            mWinMan.updateViewLayout(mFloatLayout, mLayoutParams);
+        }
         mCdrBtnState = mRecording ? 2 : 1;
     }
 
