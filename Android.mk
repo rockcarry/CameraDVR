@@ -6,7 +6,7 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := $(call all-subdir-java-files)
 
-LOCAL_PACKAGE_NAME := CameraCDR
+LOCAL_PACKAGE_NAME := CameraDVR
 
 LOCAL_CERTIFICATE := platform
 
