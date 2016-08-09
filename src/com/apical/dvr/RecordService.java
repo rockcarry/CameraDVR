@@ -1,12 +1,10 @@
-package com.apical.cdr;
+package com.apical.dvr;
 
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.SurfaceTexture;
-import android.hardware.Camera;
 import android.location.Location;
-import android.media.MediaRecorder;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
@@ -25,9 +23,7 @@ import java.util.Date;
 import com.android.camera.exif.Exif;
 import com.android.camera.exif.ExifInterface;
 
-public class RecordService extends Service implements
-    MediaRecorder.OnErrorListener,
-    MediaRecorder.OnInfoListener
+public class RecordService extends Service
 {
     private static final String TAG = "RecordService";
     private static final int CAMERA_VIDEO_WIDTH  = 800;
@@ -40,8 +36,6 @@ public class RecordService extends Service implements
     private static final int RECORD_MAX_DURATION = 60 * 1000;
 
     private RecordBinder    mBinder        = null;
-    private Camera          mCamDevMain    = null;
-    private CamCdr          mCamDevUsb     = null;
     private MediaRecorder   mRecorder      = null;
     private boolean         mRecording     = false;
     private MediaSaver      mMediaSaver    = null;
@@ -68,9 +62,10 @@ public class RecordService extends Service implements
         Settings.init(this);
         mCamSwitchState = Settings.get(Settings.KEY_CAMERA_SWITCH_STATE_VALUE, Settings.DEF_CAMERA_SWITCH_STATE_VALUE);
 
-        mBinder      = new RecordBinder ();
-        mRecorder    = new MediaRecorder();
-        mMediaSaver  = new MediaSaver(this);
+        mBinder     = new RecordBinder ();
+        mMediaSaver = new MediaSaver(this);
+        mRecorder   = MediaRecorder.getInstance();
+        mRecorder.init();
 
         // gsensor monitor
         mGSensorMon = new GSensorMonitor(this, mGSensorImpactListener);
@@ -122,9 +117,6 @@ public class RecordService extends Service implements
         PowerManager pm = (PowerManager)getSystemService(Context.POWER_SERVICE);
         mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
         mWakeLock.setReferenceCounted(false);
-
-        // select camera
-        selectCamera(Settings.DEF_CAMERA_MAIN_DEVICE_ID, Settings.DEF_CAMERA_USB_DEVICE_ID);
     }
 
     @Override
@@ -148,21 +140,12 @@ public class RecordService extends Service implements
         stopRecording();
 
         if (mRecorder != null) {
-            mRecorder.reset();
+            mRecorder.stopRecording( 0);
+            mRecorder.stopRecording( 1);
+            mRecorder.stopRecording( 2);
+            mRecorder.stopRecording(-1);
             mRecorder.release();
             mRecorder = null;
-        }
-
-        if (mCamDevMain != null) {
-            mCamDevMain.stopPreview();
-            mCamDevMain.release();
-            mCamDevMain = null;
-        }
-
-        if (mCamDevUsb != null) {
-            mCamDevUsb.stopPreview();
-            mCamDevUsb.release();
-            mCamDevUsb = null;
         }
 
         // stop disk recycle
@@ -199,46 +182,6 @@ public class RecordService extends Service implements
         if (mRecording) return mRecording;
         if (!SdcardManager.isSdcardInsert()) return mRecording;
 
-        //++ for main camera
-        try {
-            mCamDevMain.unlock();
-            mRecorder.setCamera(mCamDevMain);
-            mRecorder.setPreviewDisplay(null);
-
-            mRecorder.setAudioSource (MediaRecorder.AudioSource.CAMCORDER); 
-            mRecorder.setVideoSource (MediaRecorder.VideoSource.CAMERA);
-            mRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-
-            mRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-            mRecorder.setVideoSize(CAMERA_VIDEO_WIDTH, CAMERA_VIDEO_HEIGHT);
-            mRecorder.setVideoFrameRate(CAMERA_VIDEO_FRATE);
-            mRecorder.setVideoEncodingBitRate(RECORD_VIDEO_BITRATE);
-
-            mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-            mRecorder.setAudioChannels(CAMERA_AUDIO_CHNUM);
-            mRecorder.setAudioSamplingRate(CAMERA_AUDIO_SRATE);
-            mRecorder.setAudioEncodingBitRate(RECORD_AUDIO_BITRATE);
-
-            mCurVideoFile = getNewRecordFileName(0);
-            mRecorder.setMaxDuration(RECORD_MAX_DURATION);
-            mRecorder.setOutputFile(mCurVideoFile);
-            mRecorder.setOnErrorListener(RecordService.this);
-            mRecorder.setOnInfoListener (RecordService.this);
-            mRecorder.prepare();
-            mRecorder.start();
-            mRecording = true;
-            mRecordingStartTime = SystemClock.uptimeMillis();
-        } catch (Exception e) {
-            e.printStackTrace();
-            mRecording = false;
-            return mRecording;
-        }
-        //-- for main camera
-
-        //++ for usb camera
-        // todo...
-        //-- for usb camera
-
         // update float window
         mFloatWin.updateFloat(mRecording);
 
@@ -250,24 +193,10 @@ public class RecordService extends Service implements
 
     public void stopRecording() {
         if (!mRecording) return;
-
-        // stop & release recorder, then lock camdev
-        mRecorder.setOnErrorListener(null);
-        mRecorder.setOnInfoListener (null);
-        mRecorder.stop();
-        mRecorder.release();
-        mCamDevMain.lock();
+        else mRecording = false;
 
         // add video to media saver
         mMediaSaver.addVideo(mCurVideoFile, CAMERA_VIDEO_WIDTH, CAMERA_VIDEO_HEIGHT);
-
-        // re-create a new recorder for next recordnig
-        mRecorder  = new MediaRecorder();
-        mRecording = false;
-
-        //++ for usb camera
-        // todo...
-        //-- for usb camera
 
         // update float window
         mFloatWin.updateFloat(mRecording);
@@ -309,129 +238,46 @@ public class RecordService extends Service implements
         return mRecordingStartTime;
     }
 
-    public void takePhoto(int type, Camera.ShutterCallback sc) {
+    public void takePhoto(int type) {
         if (mTakePhotoInProgress) return;
         else mTakePhotoInProgress = true;
 
         switch (type) {
         case 0: // main camera
-            mCamDevMain.takePicture(sc, null,
-                new Camera.PictureCallback() {
-                    @Override
-                    public void onPictureTaken(byte[] data, Camera cam) {
-                        Log.d(TAG, "takePhoto onPictureTaken");
-                        Location      loc  = mLocationMon.getCurrentLocation();
-                        ExifInterface exif = Exif.getExif(data);
-                        int    orientation = Exif.getOrientation(exif);
-
-                        mMediaSaver.addImage(data,
-                            getNewPhotoFileName(0), System.currentTimeMillis(),
-                            loc, 0, 0, orientation, exif);
-
-                        mTakePhotoInProgress = false;
-                    }
-                });
             break;
         case 1: // usb camera
-            mCamDevUsb.takePicture(sc, null,
-                new Camera.PictureCallback() {
-                    @Override
-                    public void onPictureTaken(byte[] data, Camera cam) {
-                        Log.d(TAG, "takePhoto onPictureTaken");
-                        Location      loc  = mLocationMon.getCurrentLocation();
-                        ExifInterface exif = Exif.getExif(data);
-                        int    orientation = Exif.getOrientation(exif);
-
-                        mMediaSaver.addImage(data,
-                            getNewPhotoFileName(1), System.currentTimeMillis(),
-                            loc, 0, 0, orientation, exif);
-
-                        mTakePhotoInProgress = false;
-                    }
-                });
             break;
         }
     }
 
     public void setCamMainPreviewTexture(SurfaceTexture st) {
-        //++ for main camera
-        try {
-            mCamDevMain.setPreviewTexture(st);
-            mCamDevMain.startPreview();
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (mRecorder != null) {
+            mRecorder.setPreviewTexture(0, st);
+            if (st != null) {
+                mRecorder.startPreview(0);
+            }
+            else {
+                mRecorder.stopPreview(0);
+            }
         }
-        //-- for main camera
-    }
-
-    public void setCamMainPreviewDisplay(SurfaceHolder holder) {
-        //++ for main camera
-        try {
-            mCamDevMain.setPreviewDisplay(holder);
-            mCamDevMain.startPreview();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        //-- for main camera
     }
 
     public void setCamUsbPreviewTexture(SurfaceTexture st) {
-        //++ for main camera
-        try {
-            mCamDevUsb.setPreviewTexture(st);
-            mCamDevUsb.startPreview();
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (mRecorder != null) {
+            mRecorder.setPreviewTexture(1, st);
+            if (st != null) {
+                mRecorder.startPreview(1);
+            }
+            else {
+                mRecorder.stopPreview(1);
+            }
         }
-        //-- for main camera
-    }
-
-    public void setCamUsbPreviewDisplay(SurfaceHolder holder) {
-        //++ for usb camera
-        try {
-            mCamDevUsb.setPreviewDisplay(holder);
-            mCamDevUsb.startPreview();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        //-- for usb camera
-    }
-
-    public void selectCamera(int maincam, int usbcam) {
-        //++ for main camera
-        if (mCamDevMain != null) {
-            mCamDevMain.stopPreview();
-            mCamDevMain.release();
-        }
-
-        // open camera
-        mCamDevMain = Camera.open(maincam);
-
-        Camera.Parameters params = mCamDevMain.getParameters();
-        params.setPreviewSize(CAMERA_VIDEO_WIDTH, CAMERA_VIDEO_HEIGHT);
-        mCamDevMain.setParameters(params);
-
-        // enable watermark
-        SystemProperties.set("sys.watermark.pos", "22-22");
-        mHandler.removeCallbacks(mWaterMarkUpdater);
-        mHandler.post(mWaterMarkUpdater);
-        //-- for main camera
-
-        //++ for usb camera
-        if (mCamDevUsb != null) {
-            mCamDevUsb.stopPreview();
-            mCamDevUsb.release();
-        }
-
-        // open camera
-        mCamDevUsb = CamCdr.open("/dev/video" + usbcam, 0, CamCdr.CAMCDR_PIXFMT_MJPEG, 0, 0);
-        //-- for usb camera
     }
 
     public boolean getImpactEventFlag() { return mImpactEventFlag; }
 
     public static String getNewRecordFileName(int type) {
-        SdcardManager.makeCdrDirs(); // make cdr dirs
+        SdcardManager.makeDvrDirs(); // make dvr dirs
 
         Date date = new Date(System.currentTimeMillis());
         SimpleDateFormat df = new SimpleDateFormat("'VID'_yyyyMMdd_HHmmss");
@@ -439,7 +285,7 @@ public class RecordService extends Service implements
     }
 
     public static String getNewPhotoFileName(int type) {
-        SdcardManager.makeCdrDirs(); // make cdr dirs
+        SdcardManager.makeDvrDirs(); // make dvr dirs
 
         Date date = new Date(System.currentTimeMillis());
         SimpleDateFormat df = new SimpleDateFormat("'IMG'_yyyyMMdd_HHmmss");
@@ -456,28 +302,6 @@ public class RecordService extends Service implements
 
     public MediaSaver getMediaSaver() {
         return mMediaSaver;
-    }
-
-    @Override
-    public void onInfo(MediaRecorder mr, int what, int extra) {
-        Log.d(TAG, "onInfo what = " + what + ", extra = " + extra);
-        if (what == MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED) {
-            mRecordingStartTime = Long.MAX_VALUE;
-            stopRecording ();
-            startRecording();
-
-            // update impact event
-            if (SystemClock.uptimeMillis() - mImpactStartTime > 1000) {
-                mImpactEventFlag = false;
-                mMediaSaver.onGsensorImpactEvent(mImpactEventFlag);
-                mActivity  .onGsensorImpactEvent(mImpactEventFlag);
-            }
-        }
-    }
-
-    @Override
-    public void onError(MediaRecorder mr, int what, int extra) {
-        Log.d(TAG, "onError what = " + what + ", extra = " + extra);
     }
 
     private Runnable mWaterMarkUpdater = new Runnable() {

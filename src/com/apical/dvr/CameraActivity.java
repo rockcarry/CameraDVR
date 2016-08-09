@@ -1,4 +1,4 @@
-package com.apical.cdr;
+package com.apical.dvr;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -84,11 +84,11 @@ public class CameraActivity extends Activity
 
         mFlashView  = (View)findViewById(R.id.view_flash_overlay);
         mCamVideoUI = (RelativeLayout)findViewById(R.id.view_camera_videoui);
-        mBtnGallery = (ImageView)findViewById(R.id.btn_cdr_gallery);
-        mBtnSettings= (ImageView)findViewById(R.id.btn_cdr_settings);
-        mBtnShutter = (ImageView)findViewById(R.id.btn_cdr_shutter);
+        mBtnGallery = (ImageView)findViewById(R.id.btn_dvr_gallery);
+        mBtnSettings= (ImageView)findViewById(R.id.btn_dvr_settings);
+        mBtnShutter = (ImageView)findViewById(R.id.btn_dvr_shutter);
         mBtnMuteSW  = (ImageView)findViewById(R.id.btn_recmic_mute_switcher);
-        mBtnCameraSW= (ImageView)findViewById(R.id.btn_cdr_camera_switcher);
+        mBtnCameraSW= (ImageView)findViewById(R.id.btn_dvr_camera_switcher);
         mImpactLock = (ImageView)findViewById(R.id.ic_impact_lock);
         mTxtRecTime = (TextView )findViewById(R.id.text_recording_time);
 
@@ -164,13 +164,13 @@ public class CameraActivity extends Activity
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-        case R.id.btn_cdr_shutter:
+        case R.id.btn_dvr_shutter:
             startRecording(!mRecServ.isRecording());
             break;
         case R.id.btn_recmic_mute_switcher:
             setRecMicMute(!mRecServ.getRecMicMuted());
             break;
-        case R.id.btn_cdr_camera_switcher:
+        case R.id.btn_dvr_camera_switcher:
             switchCamera();
             break;
         }
@@ -182,12 +182,7 @@ public class CameraActivity extends Activity
         case R.id.view_camera_videoui:
             if (SdcardManager.isSdcardInsert()) {
                 int type = (mRecServ.getCamSwitchState() & (1 << 0)) == 0 ? 0 : 1;
-                mRecServ.takePhoto(type, new android.hardware.Camera.ShutterCallback() {
-                    @Override
-                    public void onShutter() {
-                        mAnimManager.startFlashAnimation(mFlashView);
-                    }
-                });
+                mRecServ.takePhoto(type);
             }
             return true;
         }

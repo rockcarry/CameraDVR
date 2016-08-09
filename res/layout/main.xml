@@ -65,7 +65,7 @@
                 android:src="@drawable/ic_impact_lock" />
 
             <ImageView
-                android:id="@+id/btn_cdr_gallery"
+                android:id="@+id/btn_dvr_gallery"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
@@ -74,7 +74,7 @@
                 android:src="@drawable/btn_new_gallery" />
 
             <ImageView
-                android:id="@+id/btn_cdr_settings"
+                android:id="@+id/btn_dvr_settings"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentBottom="true"
@@ -84,7 +84,7 @@
                 android:src="@drawable/btn_new_setting" />
 
             <ImageView
-                android:id="@+id/btn_cdr_shutter"
+                android:id="@+id/btn_dvr_shutter"
                 android:src="@drawable/btn_new_shutter_recording"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -96,17 +96,17 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentBottom="true"
-                android:layout_toLeftOf="@id/btn_cdr_shutter"
+                android:layout_toLeftOf="@id/btn_dvr_shutter"
                 android:layout_marginBottom="16dp"
                 android:layout_marginRight="16dp"
                 android:src="@drawable/btn_new_recmic_mute_on" />
 
             <ImageView
-                android:id="@+id/btn_cdr_camera_switcher"
+                android:id="@+id/btn_dvr_camera_switcher"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentBottom="true"
-                android:layout_toRightOf="@id/btn_cdr_shutter"
+                android:layout_toRightOf="@id/btn_dvr_shutter"
                 android:layout_marginBottom="16dp"
                 android:layout_marginLeft="16dp"
                 android:src="@drawable/btn_new_camera_switch_ab" />

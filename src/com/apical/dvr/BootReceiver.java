@@ -1,4 +1,4 @@
-package com.apical.cdr;
+package com.apical.dvr;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -6,14 +6,14 @@ import android.content.Intent;
 import android.util.Log;
 
 public class BootReceiver extends BroadcastReceiver {
-    private static final String TAG = "CameraCdrBootReceiver";
+    private static final String TAG = "CameraDVRBootReceiver";
 
     @Override
     public void onReceive(final Context context, Intent intent) {
         try {
             //+ start record service
             if (true) {
-                Intent recordservice = new Intent(context, com.apical.cdr.RecordService.class);
+                Intent recordservice = new Intent(context, com.apical.dvr.RecordService.class);
                 context.startService(recordservice);
             }
             //- start record service

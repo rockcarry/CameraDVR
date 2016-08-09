@@ -1,4 +1,4 @@
-package com.apical.cdr;
+package com.apical.dvr;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -26,12 +26,12 @@ public class FloatWindow {
     private WindowManager mWinMan        = null;
     private LinearLayout  mFloatLayout   = null;
     private LayoutParams  mLayoutParams  = null;
-    private ImageView     mCdrButton     = null;
+    private ImageView     mDvrButton     = null;
     private boolean       mDisplayed     = false;
     private int           mLastFloatPosX = -1;
     private int           mLastFloatPosY = -1;
     private boolean       mMoveFloatFlag = false;
-    private int           mCdrBtnState   = 0;
+    private int           mDvrBtnState   = 0;
     private boolean       mRecording     = false;
     private boolean       mIsScreenOn    = true;
     private Handler       mHandler       = new Handler();
@@ -40,7 +40,7 @@ public class FloatWindow {
         mContext     = context;
         mWinMan      = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
         mFloatLayout = (LinearLayout )LayoutInflater.from(mContext).inflate(R.layout.float_win, null);
-        mCdrButton   = (ImageView    )mFloatLayout.findViewById(R.id.camera_cdr_btn);
+        mDvrButton   = (ImageView    )mFloatLayout.findViewById(R.id.camera_dvr_btn);
 
         mLayoutParams  = new LayoutParams();
         mLayoutParams.type    = LayoutParams.TYPE_PHONE;
@@ -52,24 +52,24 @@ public class FloatWindow {
         mLayoutParams.width   = WindowManager.LayoutParams.WRAP_CONTENT;
         mLayoutParams.height  = WindowManager.LayoutParams.WRAP_CONTENT;
 
-        mCdrButton.setOnTouchListener(new OnTouchListener() {
+        mDvrButton.setOnTouchListener(new OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 boolean ret = false;
                 switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
-                    switch (mCdrBtnState) {
-                    case 1: mCdrButton.setBackgroundResource(R.drawable.cdr_float_btn_normal_1); break;
-                    case 2: mCdrButton.setBackgroundResource(R.drawable.cdr_float_btn_record_1); break;
+                    switch (mDvrBtnState) {
+                    case 1: mDvrButton.setBackgroundResource(R.drawable.dvr_float_btn_normal_1); break;
+                    case 2: mDvrButton.setBackgroundResource(R.drawable.dvr_float_btn_record_1); break;
                     }
                     mLastFloatPosX = (int) event.getRawX();
                     mLastFloatPosY = (int) event.getRawY();
                     mMoveFloatFlag = false;
                     break;
                 case MotionEvent.ACTION_UP:
-                    switch (mCdrBtnState) {
-                    case 1: mCdrButton.setBackgroundResource(R.drawable.cdr_float_btn_normal_0); break;
-                    case 2: mCdrButton.setBackgroundResource(R.drawable.cdr_float_btn_record_0); break;
+                    switch (mDvrBtnState) {
+                    case 1: mDvrButton.setBackgroundResource(R.drawable.dvr_float_btn_normal_0); break;
+                    case 2: mDvrButton.setBackgroundResource(R.drawable.dvr_float_btn_record_0); break;
                     }
                     ret = mMoveFloatFlag;
                     break;
@@ -97,11 +97,11 @@ public class FloatWindow {
             }
         });
 
-        mCdrButton.setOnClickListener(new OnClickListener() {
+        mDvrButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent        i = new Intent();
-                ComponentName c = new ComponentName("com.apical.cdr", "com.apical.cdr.CameraActivity");
+                ComponentName c = new ComponentName("com.apical.dvr", "com.apical.dvr.CameraActivity");
                 i.setComponent(c);
                 i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 mContext.startActivity(i);
@@ -138,11 +138,11 @@ public class FloatWindow {
 
     public void updateFloat(boolean recording) {
         mRecording = recording;
-        mCdrButton.setBackgroundResource(mRecording ? R.drawable.cdr_float_btn_record_0 : R.drawable.cdr_float_btn_normal_0);
+        mDvrButton.setBackgroundResource(mRecording ? R.drawable.dvr_float_btn_record_0 : R.drawable.dvr_float_btn_normal_0);
         if (mDisplayed) {
             mWinMan.updateViewLayout(mFloatLayout, mLayoutParams);
         }
-        mCdrBtnState = mRecording ? 2 : 1;
+        mDvrBtnState = mRecording ? 2 : 1;
     }
 
     private Runnable mShowFloatRunnable = new Runnable() {
@@ -152,14 +152,14 @@ public class FloatWindow {
                 return;
             }
 
-            mCdrButton.setBackgroundResource(mRecording ? R.drawable.cdr_float_btn_record_0 : R.drawable.cdr_float_btn_normal_0);
+            mDvrButton.setBackgroundResource(mRecording ? R.drawable.dvr_float_btn_record_0 : R.drawable.dvr_float_btn_normal_0);
             if (mDisplayed) {
                 mWinMan.updateViewLayout(mFloatLayout, mLayoutParams);
             }
             else {
                 mWinMan.addView(mFloatLayout, mLayoutParams);
             }
-            mCdrBtnState = mRecording ? 2 : 1;
+            mDvrBtnState = mRecording ? 2 : 1;
             mDisplayed   = true;
         }
     };

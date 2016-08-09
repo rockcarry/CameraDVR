@@ -1,4 +1,4 @@
-package com.apical.cdr;
+package com.apical.dvr;
 
 import android.content.Context;
 import android.hardware.Sensor;

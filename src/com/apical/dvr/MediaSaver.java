@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.apical.cdr;
+package com.apical.dvr;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;

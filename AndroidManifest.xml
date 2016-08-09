@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.apical.cdr"
+    package="com.apical.dvr"
     android:sharedUserId="android.uid.system" >
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />

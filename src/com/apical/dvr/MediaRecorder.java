@@ -1,0 +1,84 @@
+package com.apical.dvr;
+
+public class MediaRecorder {
+
+    private static MediaRecorder mSingleInstance = null;
+
+    public static MediaRecorder getInstance() {
+        if (mSingleInstance == null) {
+            mSingleInstance = new MediaRecorder();
+        }
+        return mSingleInstance;
+    }
+
+    private long mRecorderContext;
+
+    public void init() {
+        mRecorderContext = nativeInit();
+    }
+
+    public void release() {
+        nativeFree(mRecorderContext);
+        mSingleInstance = null;
+    }
+
+    public void resetCamera(int camidx, int w, int h, int frate) {
+        nativeResetCamera(mRecorderContext, camidx, w, h, frate);
+    }
+
+    public void setPreviewDisplay(int camidx, Object win) {
+        nativeSetPreviewWindow(mRecorderContext, camidx, win);
+    }
+
+    public void setPreviewTexture(int camidx, Object win) {
+        nativeSetPreviewTarget(mRecorderContext, camidx, win);
+    }
+
+    public void startPreview(int camidx) {
+        nativeStartPreview(mRecorderContext, camidx);
+    }
+
+    public void stopPreview(int camidx) {
+        nativeStopPreview(mRecorderContext, camidx);
+    }
+
+    public void startRecording(int encidx, String filename) {
+        nativeStartRecording(mRecorderContext, encidx, filename);
+    }
+
+    public void stopRecording(int encidx) {
+        nativeStopRecording(mRecorderContext, encidx);
+    }
+
+    public void setAudioSource(int encidx, int source) {
+        nativeSetAudioSource(mRecorderContext, encidx, source);
+    }
+
+    public void setVideoSource(int encidx, int source) {
+        nativeSetVideoSource(mRecorderContext, encidx, source);
+    }
+
+    private static native long nativeInit();
+    private static native void nativeFree(long ctxt);
+
+    private static native void nativeResetCamera(long ctxt, int camidx, int w, int h, int frate);
+
+    private static native void nativeSetPreviewWindow(long ctxt, int camidx, Object win);
+    private static native void nativeSetPreviewTarget(long ctxt, int camidx, Object win);
+
+    private static native void nativeStartPreview(long ctxt, int camidx);
+    private static native void nativeStopPreview (long ctxt, int camidx);
+
+    private static native void nativeStartRecording(long ctxt, int encidx, String filename);
+    private static native void nativeStopRecording (long ctxt, int encidx);
+
+    private static native void nativeSetAudioSource(long ctxt, int encidx, int source);
+    private static native void nativeSetVideoSource(long ctxt, int encidx, int source);
+
+    static {
+        System.loadLibrary("ffrecorder_jni");
+    }
+}
+
+
+

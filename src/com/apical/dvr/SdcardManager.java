@@ -1,4 +1,4 @@
-package com.apical.cdr;
+package com.apical.dvr;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -29,7 +29,7 @@ public class SdcardManager {
     public static final long LOW_STORAGE_THRESHOLD_BYTES = 200*1024*1024;
 
     // dvr pathes
-    public static final String DVR_SD_ROOT         = "/storage/extsd";
+    public static final String DVR_SD_ROOT         = "/mnt/extsd";
     public static final String DIRECTORY_DCIM      = DVR_SD_ROOT    + "/DCIM";
     public static final String DIRECTORY_PHOTO     = DIRECTORY_DCIM + "/DVR_Photo";
     public static final String DIRECTORY_VIDEO     = DIRECTORY_DCIM + "/DVR_Video";
@@ -81,34 +81,6 @@ public class SdcardManager {
     }
 
     public static boolean isSdcardInsert() {
-        /*
-        BufferedReader br = null;
-        String  str = null;
-        boolean ret = false;
-
-        try {
-            br = new BufferedReader(new FileReader(new File("/proc/mounts")));
-            while ((str = br.readLine()) != null) {
-                if (str.contains(DVR_SD_ROOT)) {
-                    ret = true;
-                    break;
-                }
-            }
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } finally {
-            if(br != null) {
-                try {
-                    br.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        return ret;
-        */
         String state = Environment.getStorageState(new File(DVR_SD_ROOT));
         if (!Environment.MEDIA_MOUNTED.equals(state)) {
             return false;
@@ -179,7 +151,7 @@ public class SdcardManager {
         return -1;
     }
 
-    public static void makeCdrDirs() {
+    public static void makeDvrDirs() {
         File dir_dcim  = new File(DIRECTORY_DCIM  );
         File dir_video = new File(DIRECTORY_VIDEO );
         File dir_impact= new File(DIRECTORY_IMPACT);
@@ -225,7 +197,7 @@ class DiskRecycleThread extends Thread
 
     @Override
     public void run() {
-        SdcardManager.makeCdrDirs(); // make cdr dirs
+        SdcardManager.makeDvrDirs(); // make dvr dirs
 
         while (!mStopCheck) {
             long avail   = SdcardManager.getAvailableSpace();
@@ -261,7 +233,6 @@ class DiskRecycleThread extends Thread
 
                     for (File f : files) {
                         recycle -= f.length();
-                        f.delete();
 
                         try {
                             if (mMediaSaver != null) {

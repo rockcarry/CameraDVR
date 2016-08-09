@@ -1,18 +1,13 @@
-package com.apical.cdr;
+package com.apical.dvr;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 
 public class Settings {
-    //++ settings for camera device id
-    public static final int DEF_CAMERA_MAIN_DEVICE_ID = 0;
-    public static final int DEF_CAMERA_USB_DEVICE_ID  = 1;
-    //-- settings for camera device id
-
     //++ settings for float button
-    public static final String KEY_FLOAT_BTN_POS_X    = "CDR_FLOAT_BTN_POS_X";
-    public static final String KEY_FLOAT_BTN_POS_Y    = "CDR_FLOAT_BTN_POS_Y";
-    public static final String KEY_FLOAT_BTN_POS_SAVE = "CDR_FLOAT_BTN_POS_SAVE";
+    public static final String KEY_FLOAT_BTN_POS_X    = "DVR_FLOAT_BTN_POS_X";
+    public static final String KEY_FLOAT_BTN_POS_Y    = "DVR_FLOAT_BTN_POS_Y";
+    public static final String KEY_FLOAT_BTN_POS_SAVE = "DVR_FLOAT_BTN_POS_SAVE";
 
     public static final int DEF_FLOAT_BTN_POS_X    = 0;
     public static final int DEF_FLOAT_BTN_POS_Y    = 0;
@@ -44,14 +39,14 @@ public class Settings {
     //-- settings for insert sdcard auto record
 
     private static final String TAG = "GSensorMonitor";
-    private static final String CDR_SETTINGS_SHARED_PREFS = "CDR_SETTINGS_SHARED_PREFS";
+    private static final String DVR_SETTINGS_SHARED_PREFS = "DVR_SETTINGS_SHARED_PREFS";
 
     private static Context           mContext;
     private static SharedPreferences mSharedPref;
 
     public static void init(Context c) {
         mContext    = c;
-        mSharedPref = mContext.getSharedPreferences(CDR_SETTINGS_SHARED_PREFS, Context.MODE_PRIVATE);
+        mSharedPref = mContext.getSharedPreferences(DVR_SETTINGS_SHARED_PREFS, Context.MODE_PRIVATE);
     }
 
     public static void set(String key, int value) {
