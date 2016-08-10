@@ -26,7 +26,8 @@ public class CameraActivity extends Activity
     implements View.OnClickListener,
                View.OnLongClickListener,
                SdcardManager.SdStateChangeListener,
-               GSensorMonitor.ImpactEventListener
+               GSensorMonitor.ImpactEventListener,
+               MiscEventMonitor.MiscEventListener
 {
     private static final String TAG = "CameraActivity";
 
@@ -206,6 +207,16 @@ public class CameraActivity extends Activity
     @Override
     public void onGsensorImpactEvent(boolean flag) {
         updateImpactLockView();
+    }
+
+    @Override
+    public void onDeviceShutdown() {}
+
+    @Override
+    public void onUsbCamStateChanged(boolean connected) {
+        mRecServ.setCamUsbPreviewTexture(mCamUsbTexture);
+        updateCameraSwitchPreviewUI();
+        updateButtonsState();
     }
 
     private void setRecMicMute(boolean mute) {

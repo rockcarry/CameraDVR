@@ -10,7 +10,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
-import android.os.SystemProperties;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -26,32 +25,27 @@ import com.android.camera.exif.ExifInterface;
 public class RecordService extends Service
 {
     private static final String TAG = "RecordService";
-    private static final int CAMERA_VIDEO_WIDTH  = 800;
-    private static final int CAMERA_VIDEO_HEIGHT = 600;
-    private static final int CAMERA_VIDEO_FRATE  = 30;
-    private static final int CAMERA_AUDIO_CHNUM  = 1;
-    private static final int CAMERA_AUDIO_SRATE  = 8000;
-    private static final int RECORD_VIDEO_BITRATE= 3000000;
-    private static final int RECORD_AUDIO_BITRATE= 12200;
-    private static final int RECORD_MAX_DURATION = 60 * 1000;
+    private static final int CAMERA_VIDEO_WIDTH   = 800;
+    private static final int CAMERA_VIDEO_HEIGHT  = 600;
+    private static final int RECORD_MAX_DURATION  = 60 * 1000;
 
-    private RecordBinder    mBinder        = null;
-    private MediaRecorder   mRecorder      = null;
-    private boolean         mRecording     = false;
-    private MediaSaver      mMediaSaver    = null;
-    private String          mCurVideoFile  = null;
-    private GSensorMonitor  mGSensorMon    = null;
-    private LocationMonitor mLocationMon   = null;
-    private SdcardManager   mSdManager     = null;
-    private FloatWindow     mFloatWin      = null;
-    private Handler         mHandler       = new Handler();
-    private CameraActivity  mActivity      = null;
-    private boolean         mTakePhotoInProgress = false;
-    private long            mRecordingStartTime  = Long.MAX_VALUE;
-    private long            mImpactStartTime     = Long.MAX_VALUE;
-    private boolean         mImpactEventFlag     = false;
-    private boolean         mRecMicMuted    = false;
-    private int             mCamSwitchState = 0;
+    private RecordBinder     mBinder              = null;
+    private MediaRecorder    mRecorder            = null;
+    private boolean          mRecording           = false;
+    private MediaSaver       mMediaSaver          = null;
+    private String           mCurVideoFile        = null;
+    private GSensorMonitor   mGSensorMon          = null;
+    private LocationMonitor  mLocationMon         = null;
+    private SdcardManager    mSdManager           = null;
+    private MiscEventMonitor mMiscEventMon        = null;
+    private FloatWindow      mFloatWin            = null;
+    private Handler          mHandler             = new Handler();
+    private CameraActivity   mActivity            = null;
+    private long             mRecordingStartTime  = Long.MAX_VALUE;
+    private long             mImpactStartTime     = Long.MAX_VALUE;
+    private boolean          mImpactEventFlag     = false;
+    private boolean          mRecMicMuted         = false;
+    private int              mCamSwitchState      = 0;
 
     private PowerManager.WakeLock mWakeLock;
 
@@ -62,7 +56,7 @@ public class RecordService extends Service
         Settings.init(this);
         mCamSwitchState = Settings.get(Settings.KEY_CAMERA_SWITCH_STATE_VALUE, Settings.DEF_CAMERA_SWITCH_STATE_VALUE);
 
-        mBinder     = new RecordBinder ();
+        mBinder     = new RecordBinder();
         mMediaSaver = new MediaSaver(this);
         mRecorder   = MediaRecorder.getInstance();
         mRecorder.init();
@@ -108,6 +102,24 @@ public class RecordService extends Service
         mSdManager.startSdStateMonitor();
         mSdManager.startDiskRecycle();
 
+        // misc event monitor
+        mMiscEventMon = new MiscEventMonitor(this, new MiscEventMonitor.MiscEventListener() {
+            @Override
+            public void onDeviceShutdown() {
+                stopRecording();
+            }
+
+            @Override
+            public void onUsbCamStateChanged(boolean connected) {
+                mRecorder.resetCamera(1, -1, -1, -1);
+                mCamSwitchState = connected ? 0 : 2;
+                if (mActivity != null) {
+                    mActivity.onUsbCamStateChanged(connected);
+                }
+            }
+        });
+        mMiscEventMon.start();
+
         // float window
         mFloatWin = new FloatWindow(this);
         mFloatWin.create();
@@ -134,7 +146,6 @@ public class RecordService extends Service
 
         // remove watermark updater
         mHandler.removeCallbacks(mWaterMarkUpdater);
-        SystemProperties.set("sys.watermark.msg", "");
 
         // stop recording
         stopRecording();
@@ -147,6 +158,9 @@ public class RecordService extends Service
             mRecorder.release();
             mRecorder = null;
         }
+
+        // stop msic event monitor
+        mMiscEventMon.stop();
 
         // stop disk recycle
         mSdManager.stopSdStateMonitor();
@@ -222,8 +236,13 @@ public class RecordService extends Service
     }
 
     public void switchCamera() {
-        mCamSwitchState++;
-        mCamSwitchState %= 4;
+        if (mMiscEventMon.isUsbCamConnected()) {
+            mCamSwitchState += 1;
+            mCamSwitchState %= 4;
+        }
+        else {
+            mCamSwitchState = 2;
+        }
 
         if (Settings.get(Settings.KEY_CAMERA_SWITCH_STATE_SAVE, Settings.DEF_CAMERA_SWITCH_STATE_SAVE) == 1) {
             Settings.set(Settings.KEY_CAMERA_SWITCH_STATE_VALUE, mCamSwitchState);
@@ -239,9 +258,6 @@ public class RecordService extends Service
     }
 
     public void takePhoto(int type) {
-        if (mTakePhotoInProgress) return;
-        else mTakePhotoInProgress = true;
-
         switch (type) {
         case 0: // main camera
             break;
@@ -310,7 +326,6 @@ public class RecordService extends Service
             mHandler.postDelayed(this, 1000);
             Date date = new Date(System.currentTimeMillis());
             SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss|- - -");
-            SystemProperties.set("sys.watermark.msg", df.format(date));
         }
     };
 
