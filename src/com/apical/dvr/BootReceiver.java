@@ -12,7 +12,7 @@ public class BootReceiver extends BroadcastReceiver {
     public void onReceive(final Context context, Intent intent) {
         try {
             //+ start record service
-            if (true) {
+            if (false) {
                 Intent recordservice = new Intent(context, com.apical.dvr.RecordService.class);
                 context.startService(recordservice);
             }
