@@ -8,6 +8,7 @@ import android.location.Location;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.util.Log;
@@ -25,9 +26,10 @@ import com.android.camera.exif.ExifInterface;
 public class RecordService extends Service
 {
     private static final String TAG = "RecordService";
-    private static final int CAMERA_VIDEO_WIDTH   = 800;
-    private static final int CAMERA_VIDEO_HEIGHT  = 600;
     private static final int RECORD_MAX_DURATION  = 60 * 1000;
+
+    private static final int MSG_UPDATE_WATERMARK = 1;
+    private static final int MSG_SWITCH_NEXT_FILE = 2;
 
     private RecordBinder     mBinder              = null;
     private MediaRecorder    mRecorder            = null;
@@ -39,7 +41,6 @@ public class RecordService extends Service
     private SdcardManager    mSdManager           = null;
     private MiscEventMonitor mMiscEventMon        = null;
     private FloatWindow      mFloatWin            = null;
-    private Handler          mHandler             = new Handler();
     private CameraActivity   mActivity            = null;
     private long             mRecordingStartTime  = Long.MAX_VALUE;
     private long             mImpactStartTime     = Long.MAX_VALUE;
@@ -62,7 +63,15 @@ public class RecordService extends Service
         mRecorder.init();
 
         // gsensor monitor
-        mGSensorMon = new GSensorMonitor(this, mGSensorImpactListener);
+        mGSensorMon = new GSensorMonitor(this, new GSensorMonitor.ImpactEventListener() {
+            @Override
+            public void onGsensorImpactEvent(boolean flag) {
+                mImpactEventFlag = true;
+                mImpactStartTime = SystemClock.uptimeMillis();
+                mMediaSaver.onGsensorImpactEvent(mImpactEventFlag);
+                mActivity  .onGsensorImpactEvent(mImpactEventFlag);
+            }
+        });
         // start gsensor monitor
         mGSensorMon.start();
 
@@ -116,6 +125,16 @@ public class RecordService extends Service
                 if (mActivity != null) {
                     mActivity.onUsbCamStateChanged(connected);
                 }
+                if (mRecording) {
+                    if (connected) {
+                        mRecorder.startRecording( 1, getNewRecordFileName(1));
+                        mRecorder.startRecording(-1, null);
+                    }
+                    else {
+                        mRecorder.stopRecording( 1);
+                        mRecorder.stopRecording(-1);
+                    }
+                }
             }
         });
         mMiscEventMon.start();
@@ -144,8 +163,8 @@ public class RecordService extends Service
         mFloatWin.hideFloat();
         mFloatWin.destroy();
 
-        // remove watermark updater
-        mHandler.removeCallbacks(mWaterMarkUpdater);
+        // remove messages
+        mHandler.removeMessages(0);
 
         // stop recording
         stopRecording();
@@ -196,6 +215,24 @@ public class RecordService extends Service
         if (mRecording) return mRecording;
         if (!SdcardManager.isSdcardInsert()) return mRecording;
 
+        // update mRecording flag
+        mRecording = true;
+
+        // update mRecordingStartTime
+        mRecordingStartTime = SystemClock.uptimeMillis();
+        mHandler.sendEmptyMessageDelayed(MSG_SWITCH_NEXT_FILE, RECORD_MAX_DURATION);
+
+        // start recording
+        if (true) {
+            mRecorder.startRecording(0, getNewRecordFileName(0));
+        }
+        if (mMiscEventMon.isUsbCamConnected()) {
+            mRecorder.startRecording(1, getNewRecordFileName(1));
+        }
+        if (true) {
+            mRecorder.startRecording(-1, null);
+        }
+
         // update float window
         mFloatWin.updateFloat(mRecording);
 
@@ -209,8 +246,11 @@ public class RecordService extends Service
         if (!mRecording) return;
         else mRecording = false;
 
-        // add video to media saver
-        mMediaSaver.addVideo(mCurVideoFile, CAMERA_VIDEO_WIDTH, CAMERA_VIDEO_HEIGHT);
+        mHandler.removeMessages(MSG_SWITCH_NEXT_FILE);
+
+        mRecorder.stopRecording( 0);
+        mRecorder.stopRecording( 1);
+        mRecorder.stopRecording(-1);
 
         // update float window
         mFloatWin.updateFloat(mRecording);
@@ -320,22 +360,38 @@ public class RecordService extends Service
         return mMediaSaver;
     }
 
-    private Runnable mWaterMarkUpdater = new Runnable() {
+    private Handler mHandler = new Handler() {
         @Override
-        public void run() {
-            mHandler.postDelayed(this, 1000);
-            Date date = new Date(System.currentTimeMillis());
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss|- - -");
-        }
-    };
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+            case MSG_UPDATE_WATERMARK:
+                mHandler.sendEmptyMessageDelayed(MSG_UPDATE_WATERMARK, 1000);
+                Date date = new Date(System.currentTimeMillis());
+                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss|- - -");
+                break;
 
-    GSensorMonitor.ImpactEventListener mGSensorImpactListener = new GSensorMonitor.ImpactEventListener() {
-        @Override
-        public void onGsensorImpactEvent(boolean flag) {
-            mImpactEventFlag = true;
-            mImpactStartTime = SystemClock.uptimeMillis();
-            mMediaSaver.onGsensorImpactEvent(mImpactEventFlag);
-            mActivity  .onGsensorImpactEvent(mImpactEventFlag);
+            case MSG_SWITCH_NEXT_FILE:
+                // update mRecordingStartTime
+                mRecordingStartTime = SystemClock.uptimeMillis();
+                mHandler.sendEmptyMessageDelayed(MSG_SWITCH_NEXT_FILE, RECORD_MAX_DURATION);
+                //++ switch to next record file
+                new Thread() {
+                    @Override
+                    public void run() {
+                        if (true) {
+                            mRecorder.startRecording(0, getNewRecordFileName(0));
+                        }
+                        if (mMiscEventMon.isUsbCamConnected()) {
+                            mRecorder.startRecording(1, getNewRecordFileName(1));
+                        }
+                        if (true) {
+                            mRecorder.startRecording(-1, null);
+                        }
+                    }
+                }.start();
+                //-- switch to next record file
+                break;
+            }
         }
     };
 }
