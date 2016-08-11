@@ -38,6 +38,11 @@ public class Settings {
     public static final int DEF_INSERTSD_AUTO_RECORD = 1;
     //-- settings for insert sdcard auto record
 
+    //++ settings for record mic mute
+    public static final String KEY_RECORD_MIC_MUTE = "KEY_RECORD_MIC_MUTE";
+    public static final int DEF_RECORD_MIC_MUTE = 1;
+    //-- settings for record mic mute
+
     private static final String TAG = "GSensorMonitor";
     private static final String DVR_SETTINGS_SHARED_PREFS = "DVR_SETTINGS_SHARED_PREFS";
 

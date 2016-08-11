@@ -45,7 +45,6 @@ public class RecordService extends Service
     private long             mRecordingStartTime  = Long.MAX_VALUE;
     private long             mImpactStartTime     = Long.MAX_VALUE;
     private boolean          mImpactEventFlag     = false;
-    private boolean          mRecMicMuted         = false;
     private int              mCamSwitchState      = 0;
 
     private PowerManager.WakeLock mWakeLock;
@@ -61,6 +60,10 @@ public class RecordService extends Service
         mMediaSaver = new MediaSaver(this);
         mRecorder   = MediaRecorder.getInstance();
         mRecorder.init();
+
+        if (1 == Settings.get(Settings.KEY_RECORD_MIC_MUTE, Settings.DEF_RECORD_MIC_MUTE)) {
+            mRecorder.setMicMute(0, true);
+        }
 
         // gsensor monitor
         mGSensorMon = new GSensorMonitor(this, new GSensorMonitor.ImpactEventListener() {
@@ -261,12 +264,14 @@ public class RecordService extends Service
         return mRecording;
     }
 
-    public boolean getRecMicMuted() {
-        return mRecMicMuted;
+    public boolean getRecMicMute() {
+        boolean mute = mRecorder.getMicMute(0);
+        return mRecorder.getMicMute(0);
     }
 
-    public void setRecMicMuted(boolean mute) {
-        mRecMicMuted = mute;
+    public void setRecMicMute(boolean mute) {
+        Settings.set(Settings.KEY_RECORD_MIC_MUTE, mute ? 1 : 0);
+        mRecorder.setMicMute(0, mute);
     }
 
     public int getCamSwitchState() {

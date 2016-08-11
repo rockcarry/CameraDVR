@@ -170,7 +170,7 @@ public class CameraActivity extends Activity
             startRecording(!mRecServ.isRecording());
             break;
         case R.id.btn_recmic_mute_switcher:
-            setRecMicMute(!mRecServ.getRecMicMuted());
+            setRecMicMute(!mRecServ.getRecMicMute());
             break;
         case R.id.btn_dvr_camera_switcher:
             switchCamera();
@@ -221,7 +221,7 @@ public class CameraActivity extends Activity
     }
 
     private void setRecMicMute(boolean mute) {
-        mRecServ.setRecMicMuted(mute);
+        mRecServ.setRecMicMute(mute);
         updateButtonsState();
     }
 
@@ -276,11 +276,11 @@ public class CameraActivity extends Activity
             //-- for recording indicator
         }
 
-        if (mRecServ != null && mRecServ.getRecMicMuted()) {
+        if (mRecServ != null && mRecServ.getRecMicMute()) {
             mBtnMuteSW.setImageResource(R.drawable.btn_new_recmic_mute_off);
         }
         else {
-            mBtnMuteSW.setImageResource(R.drawable.btn_new_recmic_mute_on);
+            mBtnMuteSW.setImageResource(R.drawable.btn_new_recmic_mute_on );
         }
 
         if (mRecServ != null) {

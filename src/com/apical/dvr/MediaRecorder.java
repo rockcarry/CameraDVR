@@ -22,6 +22,15 @@ public class MediaRecorder {
         mSingleInstance = null;
     }
 
+    public boolean getMicMute(int micidx) {
+        int mute = nativeGetMicMute(mRecorderContext, micidx);
+        return (nativeGetMicMute(mRecorderContext, micidx) == 1);
+    }
+
+    public void setMicMute(int micidx, boolean mute) {
+        nativeSetMicMute(mRecorderContext, micidx, mute ? 1 : 0);
+    }
+
     public void resetCamera(int camidx, int w, int h, int frate) {
         nativeResetCamera(mRecorderContext, camidx, w, h, frate);
     }
@@ -61,6 +70,8 @@ public class MediaRecorder {
     private static native long nativeInit();
     private static native void nativeFree(long ctxt);
 
+    private static native int  nativeGetMicMute (long ctxt, int micidx);
+    private static native void nativeSetMicMute (long ctxt, int micidx, int mute);
     private static native void nativeResetCamera(long ctxt, int camidx, int w, int h, int frate);
 
     private static native void nativeSetPreviewWindow(long ctxt, int camidx, Object win);
