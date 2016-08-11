@@ -43,6 +43,7 @@ public class CameraActivity extends Activity
     private ImageView        mImpactLock;
     private TextView         mTxtRecTime;
     private AnimationManager mAnimManager;
+    private boolean          mIndicatorShown;
 
     Handler mHandler = new Handler();
 
@@ -258,8 +259,11 @@ public class CameraActivity extends Activity
             mBtnShutter.setImageResource(R.drawable.btn_new_shutter_recording);
 
             //++ for recording indicator
-            mHandler.post(mRecordingTimeUpdater);
-            mTxtRecTime.setVisibility(View.VISIBLE);
+            if (!mIndicatorShown) {
+                mHandler.post(mRecordingTimeUpdater);
+                mTxtRecTime.setVisibility(View.VISIBLE);
+                mIndicatorShown = true;
+            }
             //-- for recording indicator
         }
         else {
@@ -268,6 +272,7 @@ public class CameraActivity extends Activity
             //++ for recording indicator
             mHandler.removeCallbacks(mRecordingTimeUpdater);
             mTxtRecTime.setVisibility(View.GONE);
+            mIndicatorShown = false;
             //-- for recording indicator
         }
 
