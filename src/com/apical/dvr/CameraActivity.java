@@ -9,6 +9,7 @@ import android.graphics.SurfaceTexture;
 import android.os.IBinder;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.os.SystemClock;
 import android.view.MotionEvent;
 import android.view.TextureView;
@@ -30,6 +31,9 @@ public class CameraActivity extends Activity
                MiscEventMonitor.MiscEventListener
 {
     private static final String TAG = "CameraActivity";
+    private static final int MSG_AUTO_HIDE_UI_BUTTONS       = 1;
+    private static final int MSG_UPDATE_RECORDING_INDICATOR = 2;
+    private static final int MSG_UPDATE_IMPACT_LOCK_VIEW    = 3;
 
     private TextureView      mCamMainPreview;
     private TextureView      mCamUsbPreview;
@@ -44,8 +48,6 @@ public class CameraActivity extends Activity
     private TextView         mTxtRecTime;
     private AnimationManager mAnimManager;
     private boolean          mIndicatorShown;
-
-    Handler mHandler = new Handler();
 
     private FrameLayout.LayoutParams mCamMainPreviewLayoutParams;
     private FrameLayout.LayoutParams mCamUsbPreviewLayoutParams ;
@@ -125,8 +127,8 @@ public class CameraActivity extends Activity
         Intent i = new Intent(CameraActivity.this, RecordService.class);
         stopService(i);
 
-        mHandler.removeCallbacks(mRecordingTimeUpdater);
-        mHandler.removeCallbacks(mUIControlsHider     );
+        // remove all messages
+        mHandler.removeMessages(0);
 
         super.onDestroy();
     }
@@ -206,7 +208,9 @@ public class CameraActivity extends Activity
     }
 
     @Override
-    public void onGsensorImpactEvent(boolean flag) {
+    public void onGsensorImpactEvent(long time) {
+        mHandler.removeMessages(MSG_UPDATE_IMPACT_LOCK_VIEW);
+        mHandler.sendEmptyMessageDelayed(MSG_UPDATE_IMPACT_LOCK_VIEW, Settings.DEF_IMPACT_DURATION);
         updateImpactLockView();
     }
 
@@ -245,7 +249,8 @@ public class CameraActivity extends Activity
     }
 
     private void updateImpactLockView() {
-        boolean impact = (mRecServ != null) && mRecServ.isRecording() && mRecServ.getImpactEventFlag();
+        boolean impact = (mRecServ != null) && mRecServ.isRecording()
+                         && (mRecServ.getImpactTime() + Settings.DEF_IMPACT_DURATION) > SystemClock.uptimeMillis();
         if (impact) {
             mImpactLock.setVisibility(View.VISIBLE);
         }
@@ -260,7 +265,7 @@ public class CameraActivity extends Activity
 
             //++ for recording indicator
             if (!mIndicatorShown) {
-                mHandler.post(mRecordingTimeUpdater);
+                mHandler.sendEmptyMessage(MSG_UPDATE_RECORDING_INDICATOR);
                 mTxtRecTime.setVisibility(View.VISIBLE);
                 mIndicatorShown = true;
             }
@@ -270,7 +275,7 @@ public class CameraActivity extends Activity
             mBtnShutter.setImageResource(R.drawable.btn_new_shutter_video);
 
             //++ for recording indicator
-            mHandler.removeCallbacks(mRecordingTimeUpdater);
+            mHandler.removeMessages(MSG_UPDATE_RECORDING_INDICATOR);
             mTxtRecTime.setVisibility(View.GONE);
             mIndicatorShown = false;
             //-- for recording indicator
@@ -392,39 +397,43 @@ public class CameraActivity extends Activity
         }
     };
 
-    private Runnable mRecordingTimeUpdater = new Runnable() {
+    private Handler mHandler = new Handler() {
         private boolean blink = false;
 
         @Override
-        public void run() {
-            mHandler.postDelayed(this, 1000);
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+            case MSG_AUTO_HIDE_UI_BUTTONS:
+                mBtnGallery .setVisibility(View.GONE);
+                mBtnSettings.setVisibility(View.GONE);
+                mBtnShutter .setVisibility(View.GONE);
+                mBtnMuteSW  .setVisibility(View.GONE);
+                mBtnCameraSW.setVisibility(View.GONE);
+                break;
 
-            SimpleDateFormat f = new SimpleDateFormat("mm:ss");
-            long time = SystemClock.uptimeMillis() - mRecServ.getRecordingStartTime();
-            if (time < 0 || time > mRecServ.getRecordingMaxDuration()) {
-                time = 0;
+            case MSG_UPDATE_RECORDING_INDICATOR:
+                mHandler.sendEmptyMessageDelayed(MSG_UPDATE_RECORDING_INDICATOR, 1000);
+                SimpleDateFormat f = new SimpleDateFormat("mm:ss");
+                long time = SystemClock.uptimeMillis() - mRecServ.getRecordingStartTime();
+                if (time < 0 || time > mRecServ.getRecordingMaxDuration()) {
+                    time = 0;
+                }
+                mTxtRecTime.setText(f.format(time - TimeZone.getDefault().getRawOffset()));
+                mTxtRecTime.setCompoundDrawablesWithIntrinsicBounds(
+                    blink ? R.drawable.ic_recording_indicator_0 : R.drawable.ic_recording_indicator_1, 0, 0, 0);
+                blink = !blink;
+                break;
+
+            case MSG_UPDATE_IMPACT_LOCK_VIEW:
+                updateImpactLockView();
+                break;
             }
-            mTxtRecTime.setText(f.format(time - TimeZone.getDefault().getRawOffset()));
-            mTxtRecTime.setCompoundDrawablesWithIntrinsicBounds(
-                blink ? R.drawable.ic_recording_indicator_0 : R.drawable.ic_recording_indicator_1, 0, 0, 0);
-            blink = !blink;
-        }
-    };
-
-    private Runnable mUIControlsHider = new Runnable() {
-        @Override
-        public void run() {
-            mBtnGallery .setVisibility(View.GONE);
-            mBtnSettings.setVisibility(View.GONE);
-            mBtnShutter .setVisibility(View.GONE);
-            mBtnMuteSW  .setVisibility(View.GONE);
-            mBtnCameraSW.setVisibility(View.GONE);
         }
     };
 
     private void showUIControls(boolean show) {
         if (show) {
-            mHandler.removeCallbacks(mUIControlsHider);
+            mHandler.removeMessages(MSG_AUTO_HIDE_UI_BUTTONS);
             mBtnGallery .setVisibility(View.VISIBLE);
             mBtnSettings.setVisibility(View.VISIBLE);
             mBtnShutter .setVisibility(View.VISIBLE);
@@ -432,7 +441,7 @@ public class CameraActivity extends Activity
             mBtnCameraSW.setVisibility(View.VISIBLE);
         }
         else {
-            mHandler.postDelayed(mUIControlsHider, 5000);
+            mHandler.sendEmptyMessageDelayed(MSG_AUTO_HIDE_UI_BUTTONS, 5000);
         }
     }
 }

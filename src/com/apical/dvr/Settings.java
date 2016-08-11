@@ -43,9 +43,15 @@ public class Settings {
     public static final int DEF_RECORD_MIC_MUTE = 1;
     //-- settings for record mic mute
 
-    private static final String TAG = "GSensorMonitor";
-    private static final String DVR_SETTINGS_SHARED_PREFS = "DVR_SETTINGS_SHARED_PREFS";
+    //++ settings for record max duration
+    public static final String KEY_RECORD_DURATION = "KEY_RECORD_DURATION";
+    public static final int DEF_RECORD_DURATION = 60000;
+    //-- settings for record max duration
 
+    // default impact duration
+    public static final int DEF_IMPACT_DURATION = 60000;
+
+    private static final String DVR_SETTINGS_SHARED_PREFS = "DVR_SETTINGS_SHARED_PREFS";
     private static Context           mContext;
     private static SharedPreferences mSharedPref;
 

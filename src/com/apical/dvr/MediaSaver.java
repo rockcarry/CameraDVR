@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * A class implementing {@link com.android.camera.app.MediaSaver}.
  */
-public class MediaSaver implements GSensorMonitor.ImpactEventListener {
+public class MediaSaver {
     private static final String TAG = "MediaSaver";
 
     /** The memory limit for unsaved image is 20MB. */
@@ -49,9 +49,6 @@ public class MediaSaver implements GSensorMonitor.ImpactEventListener {
 
     // for media save
     private ContentResolver mResolver = null;
-
-    // impact flag & listener
-    private boolean mImpactFlag = false;
 
     public MediaSaver(Context context) {
         mResolver = context.getContentResolver();
@@ -77,17 +74,12 @@ public class MediaSaver implements GSensorMonitor.ImpactEventListener {
         new ImageDelTask(path, mResolver).execute();
     }
 
-    public void addVideo(String path, int w, int h) {
-        new VideoSaveTask(path, w, h, mResolver).execute();
+    public void addVideo(String path, int w, int h, boolean impact) {
+        new VideoSaveTask(path, w, h, impact, mResolver).execute();
     }
 
     public void delVideo(String path) {
         new VideoDelTask(path, mResolver).execute();
-    }
-
-    @Override
-    public void onGsensorImpactEvent(boolean f) {
-        mImpactFlag = f;
     }
 
     private class ImageSaveTask extends AsyncTask <Void, Void, Uri> {
@@ -198,15 +190,17 @@ public class MediaSaver implements GSensorMonitor.ImpactEventListener {
     }
 
     private class VideoSaveTask extends AsyncTask <Void, Void, Uri> {
-        private String path;
-        private int    width;
-        private int    height;
+        private String  path;
+        private int     width;
+        private int     height;
+        private boolean impact;
         private final ContentResolver resolver;
 
-        public VideoSaveTask(String path, int w, int h, ContentResolver r) {
+        public VideoSaveTask(String path, int w, int h, boolean impact, ContentResolver r) {
             this.path     = path;
             this.width    = w;
             this.height   = h;
+            this.impact   = impact;
             this.resolver = r;
         }
 
@@ -215,7 +209,7 @@ public class MediaSaver implements GSensorMonitor.ImpactEventListener {
             ContentValues values = null;
             Uri           uri    = null;
             try {
-                if (mImpactFlag) {
+                if (impact) {
                     String pathold = path;
                     String pathnew = path.replace("DVR_Video", "DVR_Impact");
                     File fileold = new File(pathold);

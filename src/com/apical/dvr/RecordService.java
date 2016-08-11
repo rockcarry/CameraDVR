@@ -26,8 +26,6 @@ import com.android.camera.exif.ExifInterface;
 public class RecordService extends Service
 {
     private static final String TAG = "RecordService";
-    private static final int RECORD_MAX_DURATION  = 60 * 1000;
-
     private static final int MSG_UPDATE_WATERMARK = 1;
     private static final int MSG_SWITCH_NEXT_FILE = 2;
 
@@ -42,9 +40,12 @@ public class RecordService extends Service
     private MiscEventMonitor mMiscEventMon        = null;
     private FloatWindow      mFloatWin            = null;
     private CameraActivity   mActivity            = null;
-    private long             mRecordingStartTime  = Long.MAX_VALUE;
-    private long             mImpactStartTime     = Long.MAX_VALUE;
-    private boolean          mImpactEventFlag     = false;
+    private int              mRecordDuration      = 0;
+    private long             mRecordStartTime     = Long.MAX_VALUE;
+    private String           mRecordFileNameA     = "";
+    private String           mRecordFileNameB     = "";
+    private long             mImpactTimeStamp     = 0;
+    private boolean          mImpactSaveFlag      = false;
     private int              mCamSwitchState      = 0;
 
     private PowerManager.WakeLock mWakeLock;
@@ -55,6 +56,7 @@ public class RecordService extends Service
 
         Settings.init(this);
         mCamSwitchState = Settings.get(Settings.KEY_CAMERA_SWITCH_STATE_VALUE, Settings.DEF_CAMERA_SWITCH_STATE_VALUE);
+        mRecordDuration = Settings.get(Settings.KEY_RECORD_DURATION          , Settings.DEF_RECORD_DURATION          );
 
         mBinder     = new RecordBinder();
         mMediaSaver = new MediaSaver(this);
@@ -68,11 +70,10 @@ public class RecordService extends Service
         // gsensor monitor
         mGSensorMon = new GSensorMonitor(this, new GSensorMonitor.ImpactEventListener() {
             @Override
-            public void onGsensorImpactEvent(boolean flag) {
-                mImpactEventFlag = true;
-                mImpactStartTime = SystemClock.uptimeMillis();
-                mMediaSaver.onGsensorImpactEvent(mImpactEventFlag);
-                mActivity  .onGsensorImpactEvent(mImpactEventFlag);
+            public void onGsensorImpactEvent(long time) {
+                mImpactTimeStamp = time; // update impact time
+                mImpactSaveFlag  = true; // update impact save flag
+                mActivity.onGsensorImpactEvent(time); // call mActivity's onGsensorImpactEvent
             }
         });
         // start gsensor monitor
@@ -129,7 +130,8 @@ public class RecordService extends Service
                 }
                 if (mRecording) {
                     if (connected) {
-                        mRecorder.startRecording( 1, getNewRecordFileName(1));
+                        mRecordFileNameB = getNewRecordFileName(1);
+                        mRecorder.startRecording( 1, mRecordFileNameB);
                         mRecorder.startRecording(-1, null);
                     }
                     else {
@@ -172,10 +174,6 @@ public class RecordService extends Service
         stopRecording();
 
         if (mRecorder != null) {
-            mRecorder.stopRecording( 0);
-            mRecorder.stopRecording( 1);
-            mRecorder.stopRecording( 2);
-            mRecorder.stopRecording(-1);
             mRecorder.release();
             mRecorder = null;
         }
@@ -219,16 +217,26 @@ public class RecordService extends Service
         // update mRecording flag
         mRecording = true;
 
+        // clear impact time stamp or not
+        if (false) {
+            mImpactTimeStamp = 0;
+        }
+
+        // update impact save flag
+        mImpactSaveFlag = mImpactTimeStamp + Settings.DEF_IMPACT_DURATION > SystemClock.uptimeMillis();
+
         // update mRecordingStartTime
-        mRecordingStartTime = SystemClock.uptimeMillis();
-        mHandler.sendEmptyMessageDelayed(MSG_SWITCH_NEXT_FILE, RECORD_MAX_DURATION);
+        mRecordStartTime = SystemClock.uptimeMillis();
+        mHandler.sendEmptyMessageDelayed(MSG_SWITCH_NEXT_FILE, mRecordDuration);
 
         // start recording
         if (true) {
-            mRecorder.startRecording(0, getNewRecordFileName(0));
+            mRecordFileNameA = getNewRecordFileName(0);
+            mRecorder.startRecording(0, mRecordFileNameA);
         }
         if (mMiscEventMon.isUsbCamConnected()) {
-            mRecorder.startRecording(1, getNewRecordFileName(1));
+            mRecordFileNameB = getNewRecordFileName(1);
+            mRecorder.startRecording(1, mRecordFileNameB);
         }
         if (true) {
             mRecorder.startRecording(-1, null);
@@ -252,6 +260,9 @@ public class RecordService extends Service
         mRecorder.stopRecording( 0);
         mRecorder.stopRecording( 1);
         mRecorder.stopRecording(-1);
+
+        mMediaSaver.addVideo(mRecordFileNameA, 0, 0, mImpactSaveFlag);
+        mMediaSaver.addVideo(mRecordFileNameB, 0, 0, mImpactSaveFlag);
 
         // update float window
         mFloatWin.updateFloat(mRecording);
@@ -293,11 +304,16 @@ public class RecordService extends Service
     }
 
     public int getRecordingMaxDuration() {
-        return RECORD_MAX_DURATION;
+        return mRecordDuration;
+    }
+
+    public void setRecordingMaxDuration(int duration) {
+        mRecordDuration = duration;
+        Settings.set(Settings.KEY_RECORD_DURATION, duration);
     }
 
     public long getRecordingStartTime() {
-        return mRecordingStartTime;
+        return mRecordStartTime;
     }
 
     public void takePhoto(int type) {
@@ -333,7 +349,7 @@ public class RecordService extends Service
         }
     }
 
-    public boolean getImpactEventFlag() { return mImpactEventFlag; }
+    public long getImpactTime() { return mImpactTimeStamp; }
 
     public static String getNewRecordFileName(int type) {
         SdcardManager.makeDvrDirs(); // make dvr dirs
@@ -374,22 +390,34 @@ public class RecordService extends Service
                 break;
 
             case MSG_SWITCH_NEXT_FILE:
-                // update mRecordingStartTime
-                mRecordingStartTime = SystemClock.uptimeMillis();
-                mHandler.sendEmptyMessageDelayed(MSG_SWITCH_NEXT_FILE, RECORD_MAX_DURATION);
+                // update mRecordStartTime
+                mRecordStartTime = SystemClock.uptimeMillis();
+                mHandler.sendEmptyMessageDelayed(MSG_SWITCH_NEXT_FILE, mRecordDuration);
+
                 //++ switch to next record file
                 new Thread() {
                     @Override
                     public void run() {
+                        String newNameA = getNewRecordFileName(0);
+                        String newNameB = getNewRecordFileName(1);
+
                         if (true) {
-                            mRecorder.startRecording(0, getNewRecordFileName(0));
+                            mRecorder.startRecording(0, newNameA);
                         }
                         if (mMiscEventMon.isUsbCamConnected()) {
-                            mRecorder.startRecording(1, getNewRecordFileName(1));
+                            mRecorder.startRecording(1, newNameB);
                         }
                         if (true) {
                             mRecorder.startRecording(-1, null);
                         }
+
+                        mMediaSaver.addVideo(mRecordFileNameA, 0, 0, mImpactSaveFlag);
+                        mMediaSaver.addVideo(mRecordFileNameB, 0, 0, mImpactSaveFlag);
+                        mRecordFileNameA = newNameA;
+                        mRecordFileNameB = newNameB;
+
+                        // update impact save flag
+                        mImpactSaveFlag = mImpactTimeStamp + Settings.DEF_IMPACT_DURATION > SystemClock.uptimeMillis();
                     }
                 }.start();
                 //-- switch to next record file

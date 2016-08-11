@@ -5,6 +5,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.SystemClock;
 import android.util.Log;
 
 public class GSensorMonitor {
@@ -16,7 +17,7 @@ public class GSensorMonitor {
     private ImpactEventListener mListener;
 
     public interface ImpactEventListener {
-        public void onGsensorImpactEvent(boolean flag);
+        public void onGsensorImpactEvent(long time);
     }
 
     public GSensorMonitor(Context context, ImpactEventListener listener) {
@@ -45,7 +46,7 @@ public class GSensorMonitor {
 //              Log.d(TAG, "x = " + x + ", y = " + y + ", z = " + z + ", aa = " + aa);
                 if (aa > IMPACT_AA_LEVEL) {
                     if (mListener != null) {
-                        mListener.onGsensorImpactEvent(true);
+                        mListener.onGsensorImpactEvent(SystemClock.uptimeMillis());
                     }
                 }
             }
