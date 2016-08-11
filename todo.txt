@@ -1,8 +1,7 @@
-1. usb 摄像头预览和录像功能实现
-2. 设置界面实现
-3. 录像回放界面实现
-4. tts 语音播报提示
-5. 小视频录像的实现
+1. 设置界面实现
+2. 录像回放界面实现
+3. tts 语音播报提示
+4. 小视频录像的实现
 
 com.apical.dvr.action.accpwr.changed  param: state
 com.apical.dvr.action.usbcam.changed  param: state
