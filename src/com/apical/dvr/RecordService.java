@@ -107,9 +107,8 @@ public class RecordService extends Service
                 }
             }
         });
-        // start sd state monitor & disk recycler
-        mSdManager.startSdStateMonitor();
-        mSdManager.startDiskRecycle();
+        // start sd state monitor
+        mSdManager.start();
 
         // misc event monitor
         mMiscEventMon = new MiscEventMonitor(this, new MiscEventMonitor.MiscEventListener() {
@@ -181,9 +180,8 @@ public class RecordService extends Service
         // stop msic event monitor
         mMiscEventMon.stop();
 
-        // stop disk recycle
-        mSdManager.stopSdStateMonitor();
-        mSdManager.stopDiskRecycle();
+        // stop sd state monitor
+        mSdManager.stop();
 
         // stop location monitor
         mLocationMon.recordLocation(false);

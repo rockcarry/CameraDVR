@@ -25,21 +25,14 @@ import com.android.internal.os.storage.ExternalStorageFormatter;
 public class SdcardManager {
     private final static String TAG = "SdcardManager";
 
-    // keep at least 300MB free
-    public static final long LOW_STORAGE_THRESHOLD_BYTES = 200*1024*1024;
-
     // dvr pathes
-    public static final String DVR_SD_ROOT         = "/mnt/extsd";
-    public static final String DIRECTORY_DCIM      = DVR_SD_ROOT    + "/DCIM";
-    public static final String DIRECTORY_PHOTO     = DIRECTORY_DCIM + "/DVR_Photo";
-    public static final String DIRECTORY_VIDEO     = DIRECTORY_DCIM + "/DVR_Video";
-    public static final String DIRECTORY_IMPACT    = DIRECTORY_DCIM + "/DVR_Impact";
-    public static final int    DVR_PHOTO_KEEP_NUM  = 100;
-    public static final int    DVR_VIDEO_KEEP_NUM  = 10;
-    public static final int    DVR_IMPACT_KEEP_NUM = 10;
+    public static final String DVR_SD_ROOT      = "/mnt/extsd";
+    public static final String DIRECTORY_DCIM   = DVR_SD_ROOT    + "/DCIM";
+    public static final String DIRECTORY_PHOTO  = DIRECTORY_DCIM + "/DVR_Photo";
+    public static final String DIRECTORY_VIDEO  = DIRECTORY_DCIM + "/DVR_Video";
+    public static final String DIRECTORY_IMPACT = DIRECTORY_DCIM + "/DVR_Impact";
 
     // disk recycle thread
-    private DiskRecycleThread mRecycleThread = null;
     private Context           mContext       = null;
     private MediaSaver        mMediaSaver    = null;
     private SdStateChangeListener mListerner = null;
@@ -50,25 +43,11 @@ public class SdcardManager {
         mListerner  = l;
     }
 
-    public void startDiskRecycle() {
-        if (mRecycleThread == null) {
-            mRecycleThread = new DiskRecycleThread(mMediaSaver);
-            mRecycleThread.start();
-        }
-    }
-
-    public void stopDiskRecycle() {
-        if (mRecycleThread != null) {
-            mRecycleThread.mStopCheck = true;
-            mRecycleThread = null;
-        }
-    }
-
     public interface SdStateChangeListener {
         public void onSdStateChanged(boolean insert);
     };
 
-    public void startSdStateMonitor() {
+    public void start() {
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_MEDIA_EJECT  );
         filter.addAction(Intent.ACTION_MEDIA_MOUNTED);
@@ -76,7 +55,7 @@ public class SdcardManager {
         mContext.registerReceiver(mMediaChangeReceiver, filter);
     }
 
-    public void stopSdStateMonitor() {
+    public void stop() {
         mContext.unregisterReceiver(mMediaChangeReceiver);
     }
 
@@ -153,9 +132,11 @@ public class SdcardManager {
 
     public static void makeDvrDirs() {
         File dir_dcim  = new File(DIRECTORY_DCIM  );
+        File dir_photo = new File(DIRECTORY_PHOTO );
         File dir_video = new File(DIRECTORY_VIDEO );
         File dir_impact= new File(DIRECTORY_IMPACT);
         if (!dir_dcim  .exists()) dir_dcim  .mkdirs();
+        if (!dir_photo .exists()) dir_photo .mkdirs();
         if (!dir_video .exists()) dir_video .mkdirs();
         if (!dir_impact.exists()) dir_impact.mkdirs();
     }
@@ -183,107 +164,6 @@ public class SdcardManager {
         }
     };
 };
-
-class DiskRecycleThread extends Thread
-{
-    private final static String TAG = "DiskRecycleThread";
-
-    public  boolean    mStopCheck  = false;
-    private MediaSaver mMediaSaver = null;
-
-    public DiskRecycleThread(MediaSaver ms) {
-        mMediaSaver = ms;
-    }
-
-    @Override
-    public void run() {
-        SdcardManager.makeDvrDirs(); // make dvr dirs
-
-        while (!mStopCheck) {
-            long avail   = SdcardManager.getAvailableSpace();
-            long recycle = SdcardManager.LOW_STORAGE_THRESHOLD_BYTES - avail;
-            Log.d(TAG, "===ck=== avail = " + avail + ", recycle = " + recycle);
-
-            if (avail >= 0) {
-                recycle = recycleDirectorySpace(SdcardManager.DIRECTORY_VIDEO , recycle, SdcardManager.DVR_VIDEO_KEEP_NUM , 0);
-                recycle = recycleDirectorySpace(SdcardManager.DIRECTORY_IMPACT, recycle, SdcardManager.DVR_IMPACT_KEEP_NUM, 0);
-                recycle = recycleDirectorySpace(SdcardManager.DIRECTORY_PHOTO , recycle, SdcardManager.DVR_PHOTO_KEEP_NUM , 1);
-                if (recycle > 0) {
-                    Log.e(TAG, "===ck=== recycle disk space failed: " + recycle);
-                }
-            }
-
-            try {
-                sleep(30*1000);
-            } catch (Exception e) {}
-        }
-    }
-
-    private long recycleDirectorySpace(String path, long recycle, int keep, int type) {
-        if (recycle > 0) {
-            File dir = new File(path);
-            if (!dir.exists()) {
-                Log.e(TAG, "can't find " + path + " directory !");
-            }
-            else {
-                File[] files = dir.listFiles();
-                int    num   = files.length - keep;
-                if (num > 0) {
-                    sortFilesByLastModified(files);
-
-                    for (File f : files) {
-                        recycle -= f.length();
-
-                        try {
-                            if (mMediaSaver != null) {
-                                switch (type) {
-                                case 0: mMediaSaver.delVideo(f.getCanonicalPath()); break;
-                                case 1: mMediaSaver.delImage(f.getCanonicalPath()); break;
-                                }
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-
-                        if (recycle <= 0 || --num <= 0) {
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        return recycle;
-    }
-
-    public static void sortFilesByLastModified(File[] source) {
-        class FileComparator implements Comparator <File> {
-            @Override
-            public int compare(File left, File right) {
-                long a = left .lastModified();
-                long b = right.lastModified();
-                if      (a > b) return  1;
-                else if (a < b) return -1;
-                else            return  0;
-            }
-        }
-
-        if (source != null) {
-            Arrays.sort(source, new FileComparator());
-        }
-    }
-};
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
