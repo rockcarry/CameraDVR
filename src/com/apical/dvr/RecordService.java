@@ -317,12 +317,7 @@ public class RecordService extends Service
     }
 
     public void takePhoto(int type) {
-        switch (type) {
-        case 0: // main camera
-            break;
-        case 1: // usb camera
-            break;
-        }
+        mRecorder.takePhoto(type, getNewPhotoFileName(type));
     }
 
     public void setCamMainPreviewTexture(SurfaceTexture st) {
