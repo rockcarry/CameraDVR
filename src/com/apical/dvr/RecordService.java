@@ -269,8 +269,12 @@ public class RecordService extends Service
         mRecorder.stopRecording( 1);
         mRecorder.stopRecording(-1);
 
-        mMediaSaver.addVideo(mRecordFileNameA, 0, 0, mImpactSaveFlag);
-        mMediaSaver.addVideo(mRecordFileNameB, 0, 0, mImpactSaveFlag);
+        if (true) {
+            mMediaSaver.addVideo(mRecordFileNameA, 0, 0, mImpactSaveFlag);
+        }
+        if (mMiscEventMon.isUsbCamConnected()) {
+            mMediaSaver.addVideo(mRecordFileNameB, 0, 0, mImpactSaveFlag);
+        }
 
         // update float window
         mFloatWin.updateFloat(mRecording);
@@ -416,8 +420,13 @@ public class RecordService extends Service
                             mRecorder.startRecording(-1, null);
                         }
 
-                        mMediaSaver.addVideo(mRecordFileNameA, 0, 0, mImpactSaveFlag);
-                        mMediaSaver.addVideo(mRecordFileNameB, 0, 0, mImpactSaveFlag);
+                        if (true) {
+                            mMediaSaver.addVideo(mRecordFileNameA, 0, 0, mImpactSaveFlag);
+                        }
+                        if (mMiscEventMon.isUsbCamConnected()) {
+                            mMediaSaver.addVideo(mRecordFileNameB, 0, 0, mImpactSaveFlag);
+                        }
+
                         mRecordFileNameA = newNameA;
                         mRecordFileNameB = newNameB;
 
