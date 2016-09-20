@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.SurfaceTexture;
 import android.location.Location;
+import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
@@ -47,6 +48,7 @@ public class RecordService extends Service
     private long             mImpactTimeStamp     = 0;
     private boolean          mImpactSaveFlag      = false;
     private int              mCamSwitchState      = 0;
+    private MediaPlayer      mShutterMP           = null;
 
     private PowerManager.WakeLock mWakeLock;
 
@@ -152,6 +154,9 @@ public class RecordService extends Service
         PowerManager pm = (PowerManager)getSystemService(Context.POWER_SERVICE);
         mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
         mWakeLock.setReferenceCounted(false);
+
+        // for take photo shutter
+        mShutterMP = MediaPlayer.create(this, R.raw.shutter);
     }
 
     @Override
@@ -189,6 +194,9 @@ public class RecordService extends Service
 
         // stop gsensor monitor
         mGSensorMon.stop();
+
+        // for take photo shutter
+        mShutterMP.release();
     }
 
     @Override
@@ -318,6 +326,8 @@ public class RecordService extends Service
 
     public void takePhoto(int type) {
         mRecorder.takePhoto(type, getNewPhotoFileName(type));
+        mShutterMP.seekTo(0);
+        mShutterMP.start();
     }
 
     public void setCamMainPreviewTexture(SurfaceTexture st) {

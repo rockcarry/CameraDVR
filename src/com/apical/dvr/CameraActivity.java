@@ -185,8 +185,8 @@ public class CameraActivity extends Activity
         switch (v.getId()) {
         case R.id.view_camera_videoui:
             if (SdcardManager.isSdcardInsert()) {
-                int type = (mRecServ.getCamSwitchState() & (1 << 0)) == 0 ? 0 : 1;
-                mRecServ.takePhoto(type);
+                mRecServ.takePhoto((mRecServ.getCamSwitchState() & (1 << 0)) == 0 ? 0 : 1);
+                mAnimManager.startFlashAnimation(mFlashView);
             }
             return true;
         }
