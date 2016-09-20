@@ -15,6 +15,7 @@ public class MediaRecorder {
 
     public void init() {
         mRecorderContext = nativeInit();
+        nativeInitCallback(mRecorderContext);
     }
 
     public void release() {
@@ -67,9 +68,28 @@ public class MediaRecorder {
         nativeSetVideoSource(mRecorderContext, encidx, source);
     }
 
-    public void takePhoto(int camidx, String filename) {
+    public void takePhoto(int camidx, String filename, takePhotoCallback callback) {
+        mTakePhotoCB = callback; // setup callback
         nativeTakePhoto(mRecorderContext, camidx, filename);
     }
+
+    public interface takePhotoCallback {
+        public void onPhotoTaken(String filename);
+    }
+
+
+    //++ for take photo callback
+    private takePhotoCallback mTakePhotoCB = null;
+
+    private void internalTakePhotoCallback(String filename) {
+        if (mTakePhotoCB != null) {
+            mTakePhotoCB.onPhotoTaken(filename);
+        }
+    }
+
+    private native void nativeInitCallback(long ctxt);
+    //-- for take photo callback
+
 
     private static native long nativeInit();
     private static native void nativeFree(long ctxt);

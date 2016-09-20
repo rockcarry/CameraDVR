@@ -13,6 +13,8 @@ LOCAL_CERTIFICATE := platform
 LOCAL_JNI_SHARED_LIBRARIES := libffrecorder_jni
 LOCAL_REQUIRED_MODULES := libffrecorder_jni
 
+LOCAL_PROGUARD_ENABLED := disabled
+
 include $(BUILD_PACKAGE)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
