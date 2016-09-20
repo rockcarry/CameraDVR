@@ -41,12 +41,6 @@ import java.util.concurrent.TimeUnit;
 public class MediaSaver {
     private static final String TAG = "MediaSaver";
 
-    /** The memory limit for unsaved image is 20MB. */
-    private static final int SAVE_TASK_MEMORY_LIMIT = 20 * 1024 * 1024;
-
-    /** Memory used by the total queued save request, in bytes. */
-    private long mMemoryUse = 0;
-
     // for media save
     private ContentResolver mResolver = null;
 
@@ -54,19 +48,11 @@ public class MediaSaver {
         mResolver = context.getContentResolver();
     }
 
-    public void addImage(final byte[] data, String path, long date, Location loc, int width,
-            int height, int orientation, ExifInterface exif) {
-        if (mMemoryUse >= SAVE_TASK_MEMORY_LIMIT) {
-            Log.e(TAG, "cannot add image when the queue is full");
-            return;
-        }
-
-        ImageSaveTask t = new ImageSaveTask(data, path, date,
+    public void addImage(String path, long date, Location loc, int width, int height,
+                    int orientation, ExifInterface exif) {
+        ImageSaveTask t = new ImageSaveTask(path, date,
                 (loc == null) ? null : new Location(loc),
                 width, height, orientation, exif, mResolver);
-
-        mMemoryUse += data.length;
-
         t.execute();
     }
 
@@ -83,7 +69,6 @@ public class MediaSaver {
     }
 
     private class ImageSaveTask extends AsyncTask <Void, Void, Uri> {
-        private final byte[] data;
         private final String path;
         private final long date;
         private final Location loc;
@@ -92,10 +77,9 @@ public class MediaSaver {
         private final ExifInterface exif;
         private final ContentResolver resolver;
 
-        public ImageSaveTask(byte[] data, String path, long date, Location loc,
+        public ImageSaveTask(String path, long date, Location loc,
                              int width, int height, int orientation, ExifInterface exif,
                              ContentResolver resolver) {
-            this.data = data;
             this.path = path;
             this.date = date;
             this.loc = loc;
@@ -113,21 +97,9 @@ public class MediaSaver {
 
         @Override
         protected Uri doInBackground(Void... v) {
-            if (width == 0 || height == 0) {
-                // Decode bounds
-                BitmapFactory.Options options = new BitmapFactory.Options();
-                options.inJustDecodeBounds = true;
-                BitmapFactory.decodeByteArray(data, 0, data.length, options);
-                width = options.outWidth;
-                height = options.outHeight;
-            }
-
-            // write photo file
-            long fileLength = writeFile(path, data, exif);
-            if (fileLength <= 0) return null;
-
             File file = new File(path);
             long dateModifiedSeconds = TimeUnit.MILLISECONDS.toSeconds(file.lastModified());
+            long fileLength = file.length();
 
             ContentValues values = new ContentValues();
 //          values.put(ImageColumns.TITLE, title);
@@ -138,7 +110,7 @@ public class MediaSaver {
             // Clockwise rotation in degrees. 0, 90, 180, or 270.
             values.put(ImageColumns.ORIENTATION, orientation);
             values.put(ImageColumns.DATA, path);
-            values.put(ImageColumns.SIZE, data.length);
+            values.put(ImageColumns.SIZE, fileLength);
             values.put(MediaColumns.WIDTH, width);
             values.put(MediaColumns.HEIGHT, height);
 
@@ -163,7 +135,6 @@ public class MediaSaver {
 
         @Override
         protected void onPostExecute(Uri uri) {
-            mMemoryUse -= data.length;
         }
     }
 
@@ -260,57 +231,6 @@ public class MediaSaver {
         protected void onPostExecute(Uri uri) {
             // todo...
         }
-    }
-
-    /**
-     * Writes the JPEG data to a file. If there's EXIF info, the EXIF header
-     * will be added.
-     *
-     * @param path The path to the target file.
-     * @param jpeg The JPEG data.
-     * @param exif The EXIF info. Can be {@code null}.
-     *
-     * @return The size of the file. -1 if failed.
-     */
-    private static long writeFile(String path, byte[] jpeg, ExifInterface exif) {
-        if (exif != null) {
-            try {
-                exif.writeExif(jpeg, path);
-                File f = new File(path);
-                return f.length();
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to write data", e);
-            }
-        } else {
-            return writeFile(path, jpeg);
-        }
-        return -1;
-    }
-
-    /**
-     * Writes the data to a file.
-     *
-     * @param path The path to the target file.
-     * @param data The data to save.
-     *
-     * @return The size of the file. -1 if failed.
-     */
-    private static long writeFile(String path, byte[] data) {
-        FileOutputStream out = null;
-        try {
-            out = new FileOutputStream(path);
-            out.write(data);
-            return data.length;
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to write data", e);
-        } finally {
-            try {
-                out.close();
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to close file after write", e);
-            }
-        }
-        return -1;
     }
 }
 

@@ -333,7 +333,15 @@ public class RecordService extends Service
     }
 
     public void takePhoto(int type) {
-        mRecorder.takePhoto(type, getNewPhotoFileName(type));
+        mRecorder.takePhoto(type, getNewPhotoFileName(type), new MediaRecorder.takePhotoCallback() {
+            @Override
+            public void onPhotoTaken(String filename, int width, int height) {
+                mMediaSaver.addImage(filename,
+                    System.currentTimeMillis(),
+                    mLocationMon.getCurrentLocation(),
+                    width, height, 0, null);
+            }
+        });
 
         // play shutter sound
         mShutterMP.seekTo(0);
@@ -446,5 +454,3 @@ public class RecordService extends Service
         }
     };
 }
-
-
