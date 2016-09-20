@@ -29,8 +29,6 @@ import android.provider.MediaStore.Images.ImageColumns;
 import android.provider.MediaStore.MediaColumns;
 import android.util.Log;
 
-import com.android.camera.exif.ExifInterface;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.concurrent.TimeUnit;
@@ -48,11 +46,10 @@ public class MediaSaver {
         mResolver = context.getContentResolver();
     }
 
-    public void addImage(String path, long date, Location loc, int width, int height,
-                    int orientation, ExifInterface exif) {
+    public void addImage(String path, long date, Location loc, int width, int height, int orientation) {
         ImageSaveTask t = new ImageSaveTask(path, date,
                 (loc == null) ? null : new Location(loc),
-                width, height, orientation, exif, mResolver);
+                width, height, orientation, mResolver);
         t.execute();
     }
 
@@ -74,19 +71,16 @@ public class MediaSaver {
         private final Location loc;
         private int width, height;
         private final int orientation;
-        private final ExifInterface exif;
         private final ContentResolver resolver;
 
-        public ImageSaveTask(String path, long date, Location loc,
-                             int width, int height, int orientation, ExifInterface exif,
-                             ContentResolver resolver) {
+        public ImageSaveTask(String path, long date, Location loc, int width, int height,
+                             int orientation, ContentResolver resolver) {
             this.path = path;
             this.date = date;
             this.loc = loc;
             this.width = width;
             this.height = height;
             this.orientation = orientation;
-            this.exif = exif;
             this.resolver = resolver;
         }
 

@@ -21,9 +21,6 @@ import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import com.android.camera.exif.Exif;
-import com.android.camera.exif.ExifInterface;
-
 public class RecordService extends Service
 {
     private static final String TAG = "RecordService";
@@ -339,7 +336,7 @@ public class RecordService extends Service
                 mMediaSaver.addImage(filename,
                     System.currentTimeMillis(),
                     mLocationMon.getCurrentLocation(),
-                    width, height, 0, null);
+                    width, height, 0);
             }
         });
 
