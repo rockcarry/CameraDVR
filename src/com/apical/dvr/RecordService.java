@@ -253,6 +253,10 @@ public class RecordService extends Service
         // update float window
         mFloatWin.updateFloat(mRecording);
 
+        // play shutter sound
+        mShutterMP.seekTo(0);
+        mShutterMP.start();
+
         // acquire wake lock
         mWakeLock.acquire();
 
@@ -330,6 +334,8 @@ public class RecordService extends Service
 
     public void takePhoto(int type) {
         mRecorder.takePhoto(type, getNewPhotoFileName(type));
+
+        // play shutter sound
         mShutterMP.seekTo(0);
         mShutterMP.start();
     }
