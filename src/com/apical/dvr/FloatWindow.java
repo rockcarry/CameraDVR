@@ -100,9 +100,7 @@ public class FloatWindow {
         mDvrButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent        i = new Intent();
-                ComponentName c = new ComponentName("com.apical.dvr", "com.apical.dvr.CameraActivity");
-                i.setComponent(c);
+                Intent i = new Intent(mContext, CameraActivity.class);
                 i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 mContext.startActivity(i);
             }
