@@ -376,7 +376,7 @@ public class RecordService extends Service
 
         Date date = new Date(System.currentTimeMillis());
         SimpleDateFormat df = new SimpleDateFormat("'VID'_yyyyMMdd_HHmmss");
-        return SdcardManager.DIRECTORY_VIDEO + "/" + (type == 0 ? "A_" : "B_") + df.format(date) + ".mp4";
+        return SdcardManager.DIRECTORY_VIDEO + "/" + (type == 0 ? "A_" : "B_") + df.format(date) + ".avi";
     }
 
     public static String getNewPhotoFileName(int type) {

@@ -184,7 +184,7 @@ public class MediaSaver {
                 }
 
                 values = new ContentValues();
-                values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4");
+                values.put(MediaStore.Video.Media.MIME_TYPE, "video/avi");
                 values.put(MediaStore.Video.Media.DATA, path);
                 uri = resolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
                 resolver.update(uri, values, null, null);
