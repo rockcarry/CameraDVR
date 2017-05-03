@@ -52,6 +52,6 @@ public class GSensorMonitor {
             }
         }
 
-        public void onAccuracyChanged(Sensor sensor , int accuracy) {}
+        public void onAccuracyChanged(Sensor sensor, int accuracy) {}
     };
 }

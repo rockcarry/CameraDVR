@@ -148,7 +148,8 @@ public class SdcardManager {
             final Uri uri = intent.getData();
             String   path = uri.getPath();
 
-            if (action.equals(Intent.ACTION_MEDIA_EJECT)) {
+            if (  action.equals(Intent.ACTION_MEDIA_EJECT)
+               || action.equals(Intent.ACTION_MEDIA_UNMOUNTED) ) {
                 Log.i(TAG, "Intent.ACTION_MEDIA_EJECT path = " + path);
                 if (path.equals(DVR_SD_ROOT)) {
                     Log.i(TAG, "sdcard removed");
