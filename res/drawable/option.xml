@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (c) 2013, The Android Open Source Project
+<!-- Copyright (C) 2012 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -13,14 +13,10 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<resources>
-    <dimen name="usbcam_preview_width">226dp</dimen>
-    <dimen name="usbcam_preview_height">138dp</dimen>
-    <dimen name="text_size">30dp</dimen>
-    <dimen name="text_size_large">34dp</dimen>
-    <dimen name="text_size_small">18dp</dimen>
-    <dimen name="settings_group_margin">26dp</dimen>
-    <dimen name="settings_option_margin">26dp</dimen>
-    <dimen name="settings_inner_margin">26dp</dimen>
-    <dimen name="parting_line">1dp</dimen>
-</resources>
+
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true" android:drawable="@drawable/settings_option_mid_pressed" />
+    <item android:state_selected="true" android:drawable="@drawable/settings_option_mid_pressed" />
+    <item android:drawable="@drawable/settings_option_mid" />
+</selector>
+

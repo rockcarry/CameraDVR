@@ -177,6 +177,11 @@ public class CameraActivity extends Activity
         case R.id.btn_dvr_camera_switcher:
             switchCamera();
             break;
+        case R.id.btn_dvr_settings: {
+                SettingsDialog dlg = new SettingsDialog(this);
+                dlg.show();
+            }
+            break;
         }
     }
 
@@ -255,7 +260,7 @@ public class CameraActivity extends Activity
             mImpactLock.setVisibility(View.VISIBLE);
         }
         else {
-            mImpactLock.setVisibility(View.GONE);
+            mImpactLock.setVisibility(View.INVISIBLE);
         }
     }
 
@@ -270,15 +275,19 @@ public class CameraActivity extends Activity
                 mIndicatorShown = true;
             }
             //-- for recording indicator
+
+            mBtnSettings.setVisibility(View.INVISIBLE);
         }
         else {
             mBtnShutter.setImageResource(R.drawable.btn_new_shutter_video);
 
             //++ for recording indicator
             mHandler.removeMessages(MSG_UPDATE_RECORDING_INDICATOR);
-            mTxtRecTime.setVisibility(View.GONE);
+            mTxtRecTime.setVisibility(View.INVISIBLE);
             mIndicatorShown = false;
             //-- for recording indicator
+
+            mBtnSettings.setVisibility(View.VISIBLE);
         }
 
         if (mRecServ != null && mRecServ.getRecMicMute()) {
@@ -404,11 +413,11 @@ public class CameraActivity extends Activity
         public void handleMessage(Message msg) {
             switch (msg.what) {
             case MSG_AUTO_HIDE_UI_BUTTONS:
-                mBtnGallery .setVisibility(View.GONE);
-                mBtnSettings.setVisibility(View.GONE);
-                mBtnShutter .setVisibility(View.GONE);
-                mBtnMuteSW  .setVisibility(View.GONE);
-                mBtnCameraSW.setVisibility(View.GONE);
+                mBtnGallery .setVisibility(View.INVISIBLE);
+                mBtnSettings.setVisibility(View.INVISIBLE);
+                mBtnShutter .setVisibility(View.INVISIBLE);
+                mBtnMuteSW  .setVisibility(View.INVISIBLE);
+                mBtnCameraSW.setVisibility(View.INVISIBLE);
                 break;
 
             case MSG_UPDATE_RECORDING_INDICATOR:
@@ -435,10 +444,12 @@ public class CameraActivity extends Activity
         if (show) {
             mHandler.removeMessages(MSG_AUTO_HIDE_UI_BUTTONS);
             mBtnGallery .setVisibility(View.VISIBLE);
-            mBtnSettings.setVisibility(View.VISIBLE);
             mBtnShutter .setVisibility(View.VISIBLE);
             mBtnMuteSW  .setVisibility(View.VISIBLE);
             mBtnCameraSW.setVisibility(View.VISIBLE);
+            if (mRecServ != null && !mRecServ.isRecording()) {
+                mBtnSettings.setVisibility(View.VISIBLE);
+            }
         }
         else {
             mHandler.sendEmptyMessageDelayed(MSG_AUTO_HIDE_UI_BUTTONS, 5000);

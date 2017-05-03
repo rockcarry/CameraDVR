@@ -1,4 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">行车记录仪</string>
+    <string name="settings">设置</string>
+
+    <string name="video_quality">录像质量</string>
+    <string name="video_quality_720p">720P</string>
+    <string name="video_quality_1080p">1080P</string>
+    <string name="video_duration">录像时长</string>
+    <string name="video_duration_1min">1min</string>
+    <string name="video_duration_2min">2min</string>
+    <string name="video_duration_5min">5min</string>
+
+    <string name="poweron_recording">上电录像</string>
+    <string name="time_watermark">时间水印</string>
+    <string name="camera_flip">后视镜像</string>
+
+    <string name="impact_detect_level">碰撞灵敏度</string>
+    <string name="impact_leve_1">高</string>
+    <string name="impact_leve_2">中</string>
+    <string name="impact_leve_3">低</string>
+    <string name="impact_leve_c">关闭</string>
+
+    <string name="distance_detect_level">前车预警灵敏度</string>
+    <string name="distance_leve_1">"高 (>35KM/H)"</string>
+    <string name="distance_leve_2">"中 (>60KM/H)"</string>
+    <string name="distance_leve_3">"低 (>80KM/H)"</string>
+    <string name="distance_leve_c">"关闭"</string>
+
+    <string name="format_sd">格式化 SD 卡</string>
+    <string name="restore_settings">恢复出厂设置</string>
 </resources>

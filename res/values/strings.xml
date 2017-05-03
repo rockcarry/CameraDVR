@@ -1,4 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">DVR</string>
+    <string name="settings">settings</string>
+
+    <string name="video_quality">video quality</string>
+    <string name="video_quality_720p">720P</string>
+    <string name="video_quality_1080p">1080P</string>
+    <string name="video_duration">video duration</string>
+    <string name="video_duration_1min">1min</string>
+    <string name="video_duration_2min">2min</string>
+    <string name="video_duration_5min">5min</string>
+
+    <string name="poweron_recording">power on recording</string>
+    <string name="time_watermark">time watermark</string>
+    <string name="camera_flip">camera flip</string>
+
+    <string name="impact_detect_level">impact detect level</string>
+    <string name="impact_leve_1">High</string>
+    <string name="impact_leve_2">Normal</string>
+    <string name="impact_leve_3">Low</string>
+    <string name="impact_leve_c">Close</string>
+
+    <string name="distance_detect_level">car distance detect level</string>
+    <string name="distance_leve_1">"High  (>35KM/H)"</string>
+    <string name="distance_leve_2">"Normal(>60KM/H)"</string>
+    <string name="distance_leve_3">"Low   (>80KM/H)"</string>
+    <string name="distance_leve_c">"Close"</string>
+
+    <string name="format_sd">format sdcard</string>
+    <string name="restore_settings">restore settings</string>
 </resources>
