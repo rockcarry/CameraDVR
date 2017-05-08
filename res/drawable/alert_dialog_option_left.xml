@@ -13,13 +13,10 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<resources>
 
-    <color name="text_gray">#c5c5c5</color>
-    <color name="text_white">#ffffff</color>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true" android:drawable="@drawable/alert_dialog_background_left_pressed" />
+    <item android:state_selected="true" android:drawable="@drawable/alert_dialog_background_left_pressed" />
+    <item android:drawable="@drawable/alert_dialog_background_left" />
+</selector>
 
-    <color name="settings_dialog_bg">#2b2b2b</color>
-    <color name="parting_line_dark">#282725</color>
-
-    <color name="orange">#ff6600</color>
-</resources>

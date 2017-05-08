@@ -18,9 +18,17 @@
     <dimen name="usbcam_preview_height">138dp</dimen>
     <dimen name="text_size">30dp</dimen>
     <dimen name="text_size_large">34dp</dimen>
+    <dimen name="text_size_mid">26dp</dimen>
     <dimen name="text_size_small">18dp</dimen>
     <dimen name="settings_group_margin">26dp</dimen>
     <dimen name="settings_option_margin">26dp</dimen>
     <dimen name="settings_inner_margin">26dp</dimen>
     <dimen name="parting_line">1dp</dimen>
+
+    <dimen name="alert_dialog_width">472dp</dimen>
+    <dimen name="alert_dialog_title_height">90dp</dimen>
+    <dimen name="alert_dialog_item_height">84dp</dimen>
+    <dimen name="alert_dialog_margin">8dp</dimen>
+    <dimen name="alert_dialog_padding">28dp</dimen>
+    <dimen name="alert_dialog_message_height">120dp</dimen>
 </resources>

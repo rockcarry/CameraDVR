@@ -60,7 +60,23 @@ public class RecordService extends Service
         mBinder     = new RecordBinder();
         mMediaSaver = new MediaSaver(this);
         mRecorder   = MediaRecorder.getInstance();
-        mRecorder.init();
+
+        int quality    = Settings.get(Settings.KEY_VIDEO_QUALITY, Settings.DEF_VIDEO_QUALITY);
+        int cam_main_w = quality == 0 ? 1280 : 1920;
+        int cam_main_h = quality == 0 ? 720  : 1080;
+        mRecorder.init(cam_main_w, cam_main_h, 0, 0);
+
+        // encoder0 (1080p encoder), audio source is mic, video source is main camera
+        mRecorder.setAudioSource(0, 0);
+        mRecorder.setVideoSource(0, 0);
+
+        // encoder1 (720p encoder ), audio source is mic, video source is main camera
+        mRecorder.setAudioSource(1, 0);
+        mRecorder.setVideoSource(1, 0);
+
+        // encoder2 (vga  encoder ), audio source is mic, video source is usb camera
+        mRecorder.setAudioSource(2, 0);
+        mRecorder.setVideoSource(2, 1);
 
         if (1 == Settings.get(Settings.KEY_RECORD_MIC_MUTE, Settings.DEF_RECORD_MIC_MUTE)) {
             mRecorder.setMicMute(0, true);
@@ -130,11 +146,11 @@ public class RecordService extends Service
                 if (mRecording) {
                     if (connected) {
                         mRecordFileNameB = getNewRecordFileName(1);
-                        mRecorder.startRecording( 1, mRecordFileNameB);
+                        mRecorder.startRecording( 2, mRecordFileNameB);
                         mRecorder.startRecording(-1, null);
                     }
                     else {
-                        mRecorder.stopRecording( 1);
+                        mRecorder.stopRecording( 2);
                         mRecorder.stopRecording(-1);
                     }
                 }
@@ -236,12 +252,14 @@ public class RecordService extends Service
 
         // start recording
         if (true) {
+            int quality = Settings.get(Settings.KEY_VIDEO_QUALITY, Settings.DEF_VIDEO_QUALITY);
+            int encidx  = quality == 0 ? 1 : 0;
             mRecordFileNameA = getNewRecordFileName(0);
-            mRecorder.startRecording(0, mRecordFileNameA);
+            mRecorder.startRecording(encidx, mRecordFileNameA);
         }
         if (mMiscEventMon.isUsbCamConnected()) {
             mRecordFileNameB = getNewRecordFileName(1);
-            mRecorder.startRecording(1, mRecordFileNameB);
+            mRecorder.startRecording(2, mRecordFileNameB);
         }
         if (true) {
             mRecorder.startRecording(-1, null);
@@ -314,6 +332,11 @@ public class RecordService extends Service
         if (Settings.get(Settings.KEY_CAMERA_SWITCH_STATE_SAVE, Settings.DEF_CAMERA_SWITCH_STATE_SAVE) == 1) {
             Settings.set(Settings.KEY_CAMERA_SWITCH_STATE_VALUE, mCamSwitchState);
         }
+    }
+
+    public void setCamMainVideoQuality(int quality) {
+        mRecorder.resetCamera(0, quality == 0 ? 1280 : 1920, quality == 0 ? 720 : 1080, -1);
+        mRecorder.startPreview(0);
     }
 
     public int getRecordingMaxDuration() {
@@ -422,10 +445,12 @@ public class RecordService extends Service
                         String newNameB = getNewRecordFileName(1);
 
                         if (true) {
-                            mRecorder.startRecording(0, newNameA);
+                            int quality = Settings.get(Settings.KEY_VIDEO_QUALITY, Settings.DEF_VIDEO_QUALITY);
+                            int encidx  = quality == 0 ? 1 : 0;
+                            mRecorder.startRecording(encidx, newNameA);
                         }
                         if (mMiscEventMon.isUsbCamConnected()) {
-                            mRecorder.startRecording(1, newNameB);
+                            mRecorder.startRecording(2, newNameB);
                         }
                         if (true) {
                             mRecorder.startRecording(-1, null);

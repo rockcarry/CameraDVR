@@ -43,6 +43,12 @@ public class Settings {
     public static final int DEF_RECORD_MIC_MUTE = 1;
     //-- settings for record mic mute
 
+
+    //++ settings for video quality
+    public static final String KEY_VIDEO_QUALITY = "KEY_VIDEO_QUALITY";
+    public static final int DEF_VIDEO_QUALITY = 0;
+    //-- settings for video quality
+
     //++ settings for record max duration
     public static final String KEY_RECORD_DURATION = "KEY_RECORD_DURATION";
     public static final int DEF_RECORD_DURATION = 60000;

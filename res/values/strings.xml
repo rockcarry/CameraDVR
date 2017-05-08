@@ -29,4 +29,7 @@
 
     <string name="format_sd">format sdcard</string>
     <string name="restore_settings">restore settings</string>
+
+    <string name="ok">ok</string>
+    <string name="cancel">cancel</string>
 </resources>

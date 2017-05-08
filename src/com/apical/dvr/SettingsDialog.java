@@ -26,11 +26,9 @@ public class SettingsDialog extends Dialog {
     private int mImpactDetectState;
 
     private LinearLayout mVideoQuality;
-    private int mVideoQualityState;
     private TextView mVideoQualityText;
 
     private LinearLayout mVideoDuration;
-    private int mVideoDurationState;
     private TextView mVideoDurationText;
 
     private ImageView mFlipSwitcher;
@@ -46,17 +44,14 @@ public class SettingsDialog extends Dialog {
     //-- for adas
 
     //
-    private Context mContext;
+    private Context       mContext;
+    private RecordService mRecServ;
     //
 
-    public SettingsDialog(Context context, int theme) {
-        super(context, theme);
-        mContext = context;
-    }
-
-    public SettingsDialog(Context context) {
+    public SettingsDialog(Context context, RecordService service) {
         super(context, R.style.SettingsDialog);
         mContext = context;
+        mRecServ = service;
         setContentView(R.layout.settings_dialog);
 
         widgetInit();    
@@ -101,6 +96,19 @@ public class SettingsDialog extends Dialog {
 
         mDistanceDetectText = (TextView)findViewById(R.id.distance_detect_level_text);
         findViewById(R.id.distance_detect_level).setOnClickListener(settingsClickListener);
+
+        { // video quality
+            int[] ids   = {R.string.video_quality_720p, R.string.video_quality_1080p};
+            int   state = Settings.get(Settings.KEY_VIDEO_QUALITY, Settings.DEF_VIDEO_QUALITY);
+            mVideoQualityText.setText(ids[state]);
+        }
+
+        { // video duration
+            int[] ids      = {R.string.video_duration_1min, R.string.video_duration_2min, R.string.video_duration_5min};
+            int   duration = Settings.get(Settings.KEY_RECORD_DURATION, Settings.DEF_RECORD_DURATION);
+            int   state    = duration == 60000 ? 0 : duration == 120000 ? 1 : 2;
+            mVideoDurationText.setText(ids[state]);
+        }
     }
 
     protected View.OnClickListener dismissClickListener = new View.OnClickListener() {
@@ -133,8 +141,43 @@ public class SettingsDialog extends Dialog {
             case R.id.impact_detect_level:
                 break;
             case R.id.video_quality:
+                {
+                    SettingsAlertDlg dlg = SettingsAlertDlg.getInstance(mContext);
+                    if (dlg == null) return;
+                    int quality = Settings.get(Settings.KEY_VIDEO_QUALITY, Settings.DEF_VIDEO_QUALITY);
+                    dlg.setTitle(R.string.video_quality);
+                    dlg.addItem(R.string.video_quality_720p , quality == 0, false);
+                    dlg.addItem(R.string.video_quality_1080p, quality == 1, true );
+                    dlg.setCallback(new SettingsAlertDlg.DialogListener() {
+                        @Override
+                        public void onClick(int state) {
+                            int[] ids = {R.string.video_quality_720p, R.string.video_quality_1080p};
+                            mRecServ.setCamMainVideoQuality(state);
+                            Settings.set(Settings.KEY_VIDEO_QUALITY, state);
+                            mVideoQualityText.setText(ids[state]);
+                        }
+                    });
+                }
                 break;
             case R.id.video_duration:
+                {
+                    SettingsAlertDlg dlg = SettingsAlertDlg.getInstance(mContext);
+                    if (dlg == null) return;
+                    int duration = Settings.get(Settings.KEY_RECORD_DURATION, Settings.DEF_RECORD_DURATION);
+                    dlg.setTitle(R.string.video_duration);
+                    dlg.addItem(R.string.video_duration_1min, duration == 60000 , false);
+                    dlg.addItem(R.string.video_duration_2min, duration == 120000, false);
+                    dlg.addItem(R.string.video_duration_5min, duration == 300000, true );
+                    dlg.setCallback(new SettingsAlertDlg.DialogListener() {
+                        @Override
+                        public void onClick(int state) {
+                            int[] ids = {R.string.video_duration_1min, R.string.video_duration_2min, R.string.video_duration_5min};
+                            int   duration = state == 0 ? 60000 : state == 1 ? 120000 : 300000;
+                            Settings.set(Settings.KEY_RECORD_DURATION, duration);
+                            mVideoDurationText.setText(ids[state]);
+                        }
+                    });
+                }
                 break;
             case R.id.format_sd:
                 break;

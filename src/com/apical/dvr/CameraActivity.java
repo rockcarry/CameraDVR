@@ -178,7 +178,7 @@ public class CameraActivity extends Activity
             switchCamera();
             break;
         case R.id.btn_dvr_settings: {
-                SettingsDialog dlg = new SettingsDialog(this);
+                SettingsDialog dlg = new SettingsDialog(this, mRecServ);
                 dlg.show();
             }
             break;
