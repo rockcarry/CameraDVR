@@ -173,6 +173,7 @@ public class SettingsDialog extends Dialog {
                         public void onClick(int state) {
                             int[] ids = {R.string.video_duration_1min, R.string.video_duration_2min, R.string.video_duration_5min};
                             int   duration = state == 0 ? 60000 : state == 1 ? 120000 : 300000;
+                            mRecServ.setRecordingMaxDuration(duration);
                             Settings.set(Settings.KEY_RECORD_DURATION, duration);
                             mVideoDurationText.setText(ids[state]);
                         }
