@@ -362,7 +362,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/format_sd"
+                    android:text="@string/format_sd_title"
                     android:layout_gravity="left|center"
                     android:layout_marginLeft="@dimen/settings_option_margin"
                     android:layout_weight="1"

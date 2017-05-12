@@ -54,6 +54,11 @@ public class Settings {
     public static final int DEF_RECORD_DURATION = 60000;
     //-- settings for record max duration
 
+    //++ settings for impact detect level
+    public static final String KEY_IMPACT_DETECT_LEVEL = "KEY_IMPACT_DETECT_LEVEL";
+    public static final int DEF_IMPACT_DETECT_LEVEL = 1; // 0 - high, 1 - middle, 2 - low, 3 - close
+    //-- settings for impact detect level
+
     // default impact duration
     public static final int DEF_IMPACT_DURATION = 60000;
 

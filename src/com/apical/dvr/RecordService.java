@@ -93,6 +93,7 @@ public class RecordService extends Service
         });
         // start gsensor monitor
         mGSensorMon.start();
+        mGSensorMon.setImpactDetectLevel(Settings.get(Settings.KEY_IMPACT_DETECT_LEVEL, Settings.DEF_IMPACT_DETECT_LEVEL));
 
         // location monitor
         mLocationMon = new LocationMonitor(this, new LocationMonitor.Listener() {
@@ -338,6 +339,8 @@ public class RecordService extends Service
         mRecorder.resetCamera(0, quality == 0 ? 1280 : 1920, quality == 0 ? 720 : 1080, -1);
         mRecorder.startPreview(0);
     }
+
+    public void setImpactDetectLevel(int l) { if (mGSensorMon != null) mGSensorMon.setImpactDetectLevel(l); }
 
     public int getRecordingMaxDuration() {
         return mRecordDuration;

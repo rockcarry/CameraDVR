@@ -10,11 +10,11 @@ import android.util.Log;
 
 public class GSensorMonitor {
     private static final String TAG = "GSensorMonitor";
-    private static final float IMPACT_AA_LEVEL = 256;
 
-    private SensorManager  mSensorManager;
-    private Context        mContext;
-    private ImpactEventListener mListener;
+    private SensorManager  mSensorManager = null;
+    private Context        mContext       = null;
+    private int            mImpactLevel   = 1;
+    private ImpactEventListener mListener = null;
 
     public interface ImpactEventListener {
         public void onGsensorImpactEvent(long time);
@@ -36,6 +36,10 @@ public class GSensorMonitor {
         mSensorManager.unregisterListener(mGSensorListener);
     }
 
+    public void setImpactDetectLevel(int l) {
+        mImpactLevel = l;
+    }
+
     private SensorEventListener mGSensorListener = new SensorEventListener() {
         public void onSensorChanged(SensorEvent sensorEvent) {
             if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER){
@@ -44,7 +48,17 @@ public class GSensorMonitor {
                 float z = sensorEvent.values[2];
                 float aa= x * x + y * y + z * z;
 //              Log.d(TAG, "x = " + x + ", y = " + y + ", z = " + z + ", aa = " + aa);
-                if (aa > IMPACT_AA_LEVEL) {
+                //++ impact level
+                int level;
+                switch (mImpactLevel) {
+                case 0: level = 256; break;
+                case 1: level = 276; break;
+                case 2: level = 296; break;
+                case 3: level = 0x7fffffff; break;
+                default:level = 276; break;
+                }
+                //-- impact level
+                if (aa > level) {
                     if (mListener != null) {
                         mListener.onGsensorImpactEvent(SystemClock.uptimeMillis());
                     }

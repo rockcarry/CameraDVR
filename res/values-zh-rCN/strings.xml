@@ -27,6 +27,10 @@
     <string name="distance_leve_3">"低 (>80KM/H)"</string>
     <string name="distance_leve_c">"关闭"</string>
 
-    <string name="format_sd">格式化 SD 卡</string>
+    <string name="format_sd_title">格式化 SD 卡</string>
+    <string name="format_sd_message">是否格式化 SD 卡 ？</string>
     <string name="restore_settings">恢复出厂设置</string>
+
+    <string name="ok">确定</string>
+    <string name="cancel">取消</string>
 </resources>

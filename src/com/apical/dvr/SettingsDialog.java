@@ -54,7 +54,7 @@ public class SettingsDialog extends Dialog {
         mRecServ = service;
         setContentView(R.layout.settings_dialog);
 
-        widgetInit();    
+        widgetInit();
     }
 
     private void widgetInit() {
@@ -109,11 +109,17 @@ public class SettingsDialog extends Dialog {
             int   state    = duration == 60000 ? 0 : duration == 120000 ? 1 : 2;
             mVideoDurationText.setText(ids[state]);
         }
+
+        { // impact detect level
+            int[] ids   = {R.string.impact_leve_1, R.string.impact_leve_2, R.string.impact_leve_3, R.string.impact_leve_c};
+            int   level = Settings.get(Settings.KEY_IMPACT_DETECT_LEVEL, Settings.DEF_IMPACT_DETECT_LEVEL);
+            mImpactDetectText.setText(ids[level]);
+        }
     }
 
     protected View.OnClickListener dismissClickListener = new View.OnClickListener() {
         @Override
-        public void onClick(View v) {  
+        public void onClick(View v) {
             dismiss();
         }
     };
@@ -139,6 +145,25 @@ public class SettingsDialog extends Dialog {
         public void onClick(View v) {
             switch (v.getId()) {
             case R.id.impact_detect_level:
+                {
+                    SettingsAlertDlg dlg = SettingsAlertDlg.getInstance(mContext);
+                    if (dlg == null) return;
+                    int quality = Settings.get(Settings.KEY_IMPACT_DETECT_LEVEL, Settings.DEF_IMPACT_DETECT_LEVEL);
+                    dlg.setTitle(R.string.impact_detect_level);
+                    dlg.addItem(R.string.impact_leve_1, quality== 0, false);
+                    dlg.addItem(R.string.impact_leve_2, quality== 1, false);
+                    dlg.addItem(R.string.impact_leve_3, quality== 2, false);
+                    dlg.addItem(R.string.impact_leve_c, quality== 3, true );
+                    dlg.setCallback(new SettingsAlertDlg.DialogListener() {
+                        @Override
+                        public void onClick(int state) {
+                            int[] ids = {R.string.impact_leve_1, R.string.impact_leve_2, R.string.impact_leve_3, R.string.impact_leve_c};
+                            mRecServ.setImpactDetectLevel(state);
+                            Settings.set(Settings.KEY_IMPACT_DETECT_LEVEL, state);
+                            mImpactDetectText.setText(ids[state]);
+                        }
+                    });
+                }
                 break;
             case R.id.video_quality:
                 {
@@ -181,6 +206,20 @@ public class SettingsDialog extends Dialog {
                 }
                 break;
             case R.id.format_sd:
+                {
+                    SettingsAlertDlg dlg = SettingsAlertDlg.getInstance(mContext);
+                    if (dlg == null) return;
+                    dlg.setTitle(R.string.format_sd_title);
+                    dlg.setMessage(R.string.format_sd_message);
+                    dlg.setCallback(new SettingsAlertDlg.DialogListener() {
+                        @Override
+                        public void onClick(int state) {
+                            SdcardManager.formatSDcard(mContext);
+                            SdcardManager.makeDvrDirs();
+                        }
+                    });
+                    dlg.setButtons();
+                }
                 break;
             case R.id.restore:
                 break;
