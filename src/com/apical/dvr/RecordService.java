@@ -245,7 +245,8 @@ public class RecordService extends Service
         }
 
         // update impact save flag
-        mImpactSaveFlag = mImpactTimeStamp + Settings.DEF_IMPACT_DURATION > SystemClock.uptimeMillis();
+//      mImpactSaveFlag = mImpactTimeStamp + Settings.DEF_IMPACT_DURATION > SystemClock.uptimeMillis();
+        mImpactSaveFlag = false;
 
         // update mRecordingStartTime
         mRecordStartTime = SystemClock.uptimeMillis();
