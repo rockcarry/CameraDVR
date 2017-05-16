@@ -62,6 +62,11 @@ public class Settings {
     // default impact duration
     public static final int DEF_IMPACT_DURATION = 60000;
 
+    //++ settings for watermark enable/disable
+    public static final String KEY_WATERMARK_ENABLE = "KEY_WATERMARK_ENABLE";
+    public static final int DEF_WATERMARK_ENABLE = 1;
+    //-- settings for watermark enable/disable
+
     private static final String DVR_SETTINGS_SHARED_PREFS = "DVR_SETTINGS_SHARED_PREFS";
     private static Context           mContext;
     private static SharedPreferences mSharedPref;

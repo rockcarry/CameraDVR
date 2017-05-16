@@ -110,6 +110,10 @@ public class SettingsDialog extends Dialog {
             mVideoDurationText.setText(ids[state]);
         }
 
+        { // watermark
+            mWatermark.setSelected(Settings.get(Settings.KEY_WATERMARK_ENABLE, Settings.DEF_WATERMARK_ENABLE) == 0 ? false : true);
+        }
+
         { // impact detect level
             int[] ids   = {R.string.impact_leve_1, R.string.impact_leve_2, R.string.impact_leve_3, R.string.impact_leve_c};
             int   level = Settings.get(Settings.KEY_IMPACT_DETECT_LEVEL, Settings.DEF_IMPACT_DETECT_LEVEL);
@@ -132,6 +136,8 @@ public class SettingsDialog extends Dialog {
             case R.id.poweron_recording:
                 break;
             case R.id.watermark_switch:
+                mRecServ.setWatermarkEnable(isChecked);
+                Settings.set(Settings.KEY_WATERMARK_ENABLE, isChecked ? 1 : 0);
                 break;
             case R.id.flip_switcher:
                 break;

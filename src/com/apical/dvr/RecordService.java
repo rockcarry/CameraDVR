@@ -42,6 +42,7 @@ public class RecordService extends Service
     private long             mRecordStartTime     = Long.MAX_VALUE;
     private String           mRecordFileNameA     = "";
     private String           mRecordFileNameB     = "";
+    private boolean          mWatermarkEnable     = false;
     private long             mImpactTimeStamp     = 0;
     private boolean          mImpactSaveFlag      = false;
     private int              mCamSwitchState      = 0;
@@ -96,17 +97,7 @@ public class RecordService extends Service
         mGSensorMon.setImpactDetectLevel(Settings.get(Settings.KEY_IMPACT_DETECT_LEVEL, Settings.DEF_IMPACT_DETECT_LEVEL));
 
         // location monitor
-        mLocationMon = new LocationMonitor(this, new LocationMonitor.Listener() {
-            @Override
-            public void showGpsOnScreenIndicator(boolean hasSignal) {
-            }
-            @Override
-            public void hideGpsOnScreenIndicator() {
-            }
-            @Override
-            public void onGpsSpeedChanged(float speed) {
-            }
-        });
+        mLocationMon = new LocationMonitor(this, null);
         // start location monitor
         mLocationMon.recordLocation(true);
 
@@ -171,6 +162,9 @@ public class RecordService extends Service
 
         // for take photo shutter
         mShutterMP = MediaPlayer.create(this, R.raw.shutter);
+
+        // for watermark
+        setWatermarkEnable(Settings.get(Settings.KEY_WATERMARK_ENABLE, Settings.DEF_WATERMARK_ENABLE) == 0 ? false : true);
     }
 
     @Override
@@ -336,11 +330,22 @@ public class RecordService extends Service
         }
     }
 
+    public void setWatermarkEnable(boolean en) {
+        if (en) {
+            mHandler.sendEmptyMessage(MSG_UPDATE_WATERMARK);
+        } else {
+            mHandler.removeMessages(MSG_UPDATE_WATERMARK);
+            mRecorder.setWatermark(0, 32, 32, "");
+        }
+        mWatermarkEnable = en;
+    }
+
     public void setCamMainVideoQuality(int quality) {
         mRecorder.resetCamera(0, quality == 0 ? 1280 : 1920, quality == 0 ? 720 : 1080, -1);
         mRecorder.startPreview(0);
     }
 
+    public long getImpactTime() { return mImpactTimeStamp; }
     public void setImpactDetectLevel(int l) { if (mGSensorMon != null) mGSensorMon.setImpactDetectLevel(l); }
 
     public int getRecordingMaxDuration() {
@@ -396,8 +401,6 @@ public class RecordService extends Service
         }
     }
 
-    public long getImpactTime() { return mImpactTimeStamp; }
-
     public static String getNewRecordFileName(int type) {
         SdcardManager.makeDvrDirs(); // make dvr dirs
 
@@ -432,8 +435,13 @@ public class RecordService extends Service
             switch (msg.what) {
             case MSG_UPDATE_WATERMARK:
                 mHandler.sendEmptyMessageDelayed(MSG_UPDATE_WATERMARK, 1000);
-                Date date = new Date(System.currentTimeMillis());
-                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss|- - -");
+                Date           date = new Date(System.currentTimeMillis());
+                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss\n");
+                float         speed = mLocationMon.getCurrentSpeed();
+                String    watermark = df.format(date) + (speed < 0 ? " - - - " : ("" + (int)(speed * 3.6) + " KM/H"));
+                if (mWatermarkEnable) {
+                    mRecorder.setWatermark(0, 88, 68, watermark);
+                }
                 break;
 
             case MSG_SWITCH_NEXT_FILE:

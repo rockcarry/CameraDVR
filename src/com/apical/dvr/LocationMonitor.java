@@ -17,11 +17,17 @@
 package com.apical.dvr;
 
 import android.content.Context;
+import android.location.GpsSatellite;
+import android.location.GpsStatus;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.os.Bundle;
 import android.util.Log;
+
+import java.util.Iterator;
+
 
 /**
  * A class that handles everything about location.
@@ -29,47 +35,35 @@ import android.util.Log;
 public class LocationMonitor {
     private static final String TAG = "LocationMonitor";
 
-    private Context mContext;
-    private Listener mListener;
+    private Context         mContext;
+    private Listener        mListener;
     private LocationManager mLocationManager;
-    private boolean mRecordLocation;
-
-    LocationListener [] mLocationListeners = new LocationListener[] {
-            new LocationListener(android.location.LocationManager.GPS_PROVIDER),
-            new LocationListener(android.location.LocationManager.NETWORK_PROVIDER)
-    };
+    private Location        mLastLocation;
+    private int             mUsedInFix;
+    private float           mSpeed = -1;
 
     public interface Listener {
-        public void showGpsOnScreenIndicator(boolean hasSignal);
-        public void hideGpsOnScreenIndicator();
         public void onGpsSpeedChanged(float speed);
     }
 
     public LocationMonitor(Context context, Listener listener) {
-        mContext = context;
+        mContext  = context;
         mListener = listener;
     }
 
     public Location getCurrentLocation() {
-        if (!mRecordLocation) return null;
+        return mLastLocation;
+    }
 
-        // go in best to worst order
-        for (int i = 0; i < mLocationListeners.length; i++) {
-            Location l = mLocationListeners[i].current();
-            if (l != null) return l;
-        }
-        Log.d(TAG, "No location received yet.");
-        return null;
+    public float getCurrentSpeed() {
+        return mSpeed;
     }
 
     public void recordLocation(boolean recordLocation) {
-        if (mRecordLocation != recordLocation) {
-            mRecordLocation = recordLocation;
-            if (recordLocation) {
-                startReceivingLocationUpdates();
-            } else {
-                stopReceivingLocationUpdates();
-            }
+        if (recordLocation) {
+            startReceivingLocationUpdates();
+        } else {
+            stopReceivingLocationUpdates();
         }
     }
 
@@ -81,22 +75,11 @@ public class LocationMonitor {
         if (mLocationManager != null) {
             try {
                 mLocationManager.requestLocationUpdates(
-                        android.location.LocationManager.NETWORK_PROVIDER,
-                        200,
-                        10,
-                        mLocationListeners[1]);
-            } catch (SecurityException ex) {
-                Log.i(TAG, "fail to request location update, ignore", ex);
-            } catch (IllegalArgumentException ex) {
-                Log.d(TAG, "provider does not exist " + ex.getMessage());
-            }
-            try {
-                mLocationManager.requestLocationUpdates(
                         android.location.LocationManager.GPS_PROVIDER,
                         1000,
-                        0F,
-                        mLocationListeners[0]);
-                if (mListener != null) mListener.showGpsOnScreenIndicator(false);
+                        1,
+                        mLocationListener);
+                mLocationManager.addGpsStatusListener(mGpsStatusListener);
             } catch (SecurityException ex) {
                 Log.i(TAG, "fail to request location update, ignore", ex);
             } catch (IllegalArgumentException ex) {
@@ -108,86 +91,91 @@ public class LocationMonitor {
 
     private void stopReceivingLocationUpdates() {
         if (mLocationManager != null) {
-            for (int i = 0; i < mLocationListeners.length; i++) {
-                try {
-                    mLocationManager.removeUpdates(mLocationListeners[i]);
-                } catch (Exception ex) {
-                    Log.i(TAG, "fail to remove location listners, ignore", ex);
-                }
+            try {
+                mLocationManager.removeUpdates(mLocationListener);
+            } catch (Exception ex) {
+                Log.i(TAG, "fail to remove location listners, ignore", ex);
             }
             Log.d(TAG, "stopReceivingLocationUpdates");
         }
-        if (mListener != null) mListener.hideGpsOnScreenIndicator();
     }
 
-    private class LocationListener
-            implements android.location.LocationListener {
-        Location mLastLocation;
-        boolean mValid = false;
-        String mProvider;
-
-        public LocationListener(String provider) {
-            mProvider = provider;
-            mLastLocation = new Location(mProvider);
-        }
-
+    private LocationListener mLocationListener = new LocationListener() {
         @Override
-        public void onLocationChanged(Location newLocation) {
-            if (newLocation.getLatitude() == 0.0
-                    && newLocation.getLongitude() == 0.0) {
-                // Hack to filter out 0.0,0.0 locations
-                return;
-            }
-            // If GPS is available before start camera, we won't get status
-            // update so update GPS indicator when we receive data.
-            if (mListener != null && mRecordLocation &&
-                    android.location.LocationManager.GPS_PROVIDER.equals(mProvider)) {
-                mListener.showGpsOnScreenIndicator(true);
-            }
-            if (!mValid) {
-                Log.d(TAG, "Got first location.");
-            }
-            mLastLocation.set(newLocation);
-            mValid = true;
-
-            if (mListener != null && mRecordLocation &&
-                    android.location.LocationManager.GPS_PROVIDER.equals(mProvider)) {
-                mListener.onGpsSpeedChanged(newLocation.getSpeed());
+        public void onStatusChanged(String arg0, int arg1, Bundle arg2) {
+            switch (arg1) {
+            case LocationProvider.AVAILABLE:
+                updateGpsSpeed(-1);
+                break;
+            case LocationProvider.OUT_OF_SERVICE:
+                updateGpsSpeed(-1);
+                break;
+            case LocationProvider.TEMPORARILY_UNAVAILABLE:
+                updateGpsSpeed(-1);
+                break;
             }
         }
 
         @Override
-        public void onProviderEnabled(String provider) {
+        public void onProviderEnabled(String arg0) {
         }
 
         @Override
-        public void onProviderDisabled(String provider) {
-            mValid = false;
-            if (mListener != null && mRecordLocation &&
-                    android.location.LocationManager.GPS_PROVIDER.equals(provider)) {
-                mListener.onGpsSpeedChanged(-1);
+        public void onProviderDisabled(String arg0) {
+            updateGpsSpeed(-1);
+        }
+
+        @Override
+        public void onLocationChanged(Location location) {
+            if (location != null && mUsedInFix >= 3) {
+                updateGpsSpeed(location.getSpeed());
+                mLastLocation.set(location);
+            } else {
+                updateGpsSpeed(-1);
             }
         }
+    };
 
+    GpsStatus.Listener mGpsStatusListener = new GpsStatus.Listener() {
         @Override
-        public void onStatusChanged(
-                String provider, int status, Bundle extras) {
-            switch(status) {
-                case LocationProvider.OUT_OF_SERVICE:
-                case LocationProvider.TEMPORARILY_UNAVAILABLE: {
-                    mValid = false;
-                    if (mListener != null && mRecordLocation &&
-                            android.location.LocationManager.GPS_PROVIDER.equals(provider)) {
-                        mListener.showGpsOnScreenIndicator(false);
-                        mListener.onGpsSpeedChanged(-1);
+        public void onGpsStatusChanged(int arg0) {
+            switch (arg0) {
+            case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
+                GpsStatus gpsStatus = mLocationManager.getGpsStatus(null);
+                int usedinfix = 0;
+
+                if (gpsStatus != null) {
+                    Iterator<GpsSatellite> satellites = gpsStatus
+                            .getSatellites().iterator();
+
+                    if (satellites != null) {
+                        while (satellites.hasNext()) {
+                            GpsSatellite satellite = satellites.next();
+
+                            if (satellite.usedInFix()) {
+                                usedinfix++;
+                            }
+                        }
                     }
-                    break;
                 }
+                mUsedInFix = usedinfix;
+                if (mUsedInFix < 3) {
+                    updateGpsSpeed(-1);
+                }
+                break;
+
+            case GpsStatus.GPS_EVENT_STARTED:
+                break;
+            case GpsStatus.GPS_EVENT_STOPPED:
+                break;
             }
         }
+    };
 
-        public Location current() {
-            return mValid ? mLastLocation : null;
+    private void updateGpsSpeed(float speed) {
+        if (mListener != null) {
+            mListener.onGpsSpeedChanged(speed);
         }
+        mSpeed = speed;
     }
 }
