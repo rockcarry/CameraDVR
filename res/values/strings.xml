@@ -30,6 +30,7 @@
     <string name="format_sd_title">format sdcard</string>
     <string name="format_sd_message">format sdcard or not ?</string>
     <string name="restore_settings">restore settings</string>
+    <string name="restore_ornot">restore settings or not ?</string>
 
     <string name="ok">ok</string>
     <string name="cancel">cancel</string>

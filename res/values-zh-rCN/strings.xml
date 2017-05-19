@@ -30,6 +30,7 @@
     <string name="format_sd_title">格式化 SD 卡</string>
     <string name="format_sd_message">是否格式化 SD 卡 ？</string>
     <string name="restore_settings">恢复出厂设置</string>
+    <string name="restore_ornot">是否恢复出厂设置？</string>
 
     <string name="ok">确定</string>
     <string name="cancel">取消</string>

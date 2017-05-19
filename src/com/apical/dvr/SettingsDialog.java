@@ -112,7 +112,7 @@ public class SettingsDialog extends Dialog {
         }
 
         { // poweron record
-            mPowerOnRecord.setSelected(!SystemProperties.get("persist.sys.poweron.record", "0").equals("0"));
+            mPowerOnRecord.setSelected(!SystemProperties.get(Settings.KEY_POWERON_RECORD, Settings.DEF_POWERON_RECORD).equals("0"));
         }
 
         { // watermark
@@ -139,7 +139,7 @@ public class SettingsDialog extends Dialog {
             boolean isChecked = !v.isSelected();
             switch (v.getId()) {
             case R.id.poweron_recording_switch:
-                SystemProperties.set("persist.sys.poweron.record", isChecked ? "1" : "0");
+                SystemProperties.set(Settings.KEY_POWERON_RECORD, isChecked ? "1" : "0");
                 break;
             case R.id.watermark_switch:
                 mRecServ.setWatermarkEnable(isChecked);
@@ -234,6 +234,48 @@ public class SettingsDialog extends Dialog {
                 }
                 break;
             case R.id.restore:
+                {
+                    SettingsAlertDlg dlg = SettingsAlertDlg.getInstance(mContext);
+                    if (dlg == null) return;
+                    dlg.setTitle(R.string.restore_settings);
+                    dlg.setMessage(R.string.restore_ornot);
+                    dlg.setCallback(new SettingsAlertDlg.DialogListener(){
+                        @Override
+                        public void onClick(int state) {
+                            Settings.set(Settings.KEY_VIDEO_QUALITY      , Settings.DEF_VIDEO_QUALITY      );
+                            Settings.set(Settings.KEY_RECORD_DURATION    , Settings.DEF_RECORD_DURATION    );
+                            Settings.set(Settings.KEY_WATERMARK_ENABLE   , Settings.DEF_WATERMARK_ENABLE   );
+                            Settings.set(Settings.KEY_IMPACT_DETECT_LEVEL, Settings.DEF_IMPACT_DETECT_LEVEL);
+                            SystemProperties.set(Settings.KEY_POWERON_RECORD, Settings.DEF_POWERON_RECORD);
+
+                            // quality
+                            int[] quality_ids  = {R.string.video_quality_720p, R.string.video_quality_1080p};
+                            mVideoQualityText.setText(quality_ids[Settings.DEF_VIDEO_QUALITY]);
+                            mRecServ.setCamMainVideoQuality(Settings.DEF_VIDEO_QUALITY);
+
+                            // duration
+                            int[] duration_ids = {R.string.video_duration_1min, R.string.video_duration_2min, R.string.video_duration_5min};
+                            int   duration     = Settings.DEF_RECORD_DURATION;
+                            int   index        = duration == 60000 ? 0 : duration == 120000 ? 1 : 2;
+                            mVideoDurationText.setText(duration_ids[index]);
+                            mRecServ.setRecordingMaxDuration(duration);
+
+                            // poweron record
+                            mPowerOnRecord.setSelected(!Settings.DEF_POWERON_RECORD.equals("0"));
+
+                            // watermark
+                            boolean watermark_enable = Settings.DEF_WATERMARK_ENABLE == 0 ? false : true;
+                            mWatermark.setSelected(watermark_enable);
+                            mRecServ.setWatermarkEnable(watermark_enable);
+
+                            // impact
+                            int[] impact_ids   = {R.string.impact_leve_1, R.string.impact_leve_2, R.string.impact_leve_3, R.string.impact_leve_c};
+                            mImpactDetectText.setText(impact_ids[Settings.DEF_IMPACT_DETECT_LEVEL]);
+                            mRecServ.setImpactDetectLevel(Settings.DEF_IMPACT_DETECT_LEVEL);
+                        }
+                    });
+                    dlg.setButtons();
+                }
                 break;
             //++ for adas
             case R.id.distance_detect_level:

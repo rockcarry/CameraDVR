@@ -67,6 +67,9 @@ public class Settings {
     public static final int DEF_WATERMARK_ENABLE = 1;
     //-- settings for watermark enable/disable
 
+    public static final String KEY_POWERON_RECORD = "persist.sys.poweron.record";
+    public static final String DEF_POWERON_RECORD = "0";
+
     private static final String DVR_SETTINGS_SHARED_PREFS = "DVR_SETTINGS_SHARED_PREFS";
     private static Context           mContext;
     private static SharedPreferences mSharedPref;
