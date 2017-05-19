@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.Intent;
+import android.os.SystemProperties;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -110,6 +111,10 @@ public class SettingsDialog extends Dialog {
             mVideoDurationText.setText(ids[state]);
         }
 
+        { // poweron record
+            mPowerOnRecord.setSelected(!SystemProperties.get("persist.sys.poweron.record", "0").equals("0"));
+        }
+
         { // watermark
             mWatermark.setSelected(Settings.get(Settings.KEY_WATERMARK_ENABLE, Settings.DEF_WATERMARK_ENABLE) == 0 ? false : true);
         }
@@ -133,7 +138,8 @@ public class SettingsDialog extends Dialog {
         public void onClick(View v) {
             boolean isChecked = !v.isSelected();
             switch (v.getId()) {
-            case R.id.poweron_recording:
+            case R.id.poweron_recording_switch:
+                SystemProperties.set("persist.sys.poweron.record", isChecked ? "1" : "0");
                 break;
             case R.id.watermark_switch:
                 mRecServ.setWatermarkEnable(isChecked);
@@ -156,10 +162,10 @@ public class SettingsDialog extends Dialog {
                     if (dlg == null) return;
                     int quality = Settings.get(Settings.KEY_IMPACT_DETECT_LEVEL, Settings.DEF_IMPACT_DETECT_LEVEL);
                     dlg.setTitle(R.string.impact_detect_level);
-                    dlg.addItem(R.string.impact_leve_1, quality== 0, false);
-                    dlg.addItem(R.string.impact_leve_2, quality== 1, false);
-                    dlg.addItem(R.string.impact_leve_3, quality== 2, false);
-                    dlg.addItem(R.string.impact_leve_c, quality== 3, true );
+                    dlg.addItem(R.string.impact_leve_1, quality == 0, false);
+                    dlg.addItem(R.string.impact_leve_2, quality == 1, false);
+                    dlg.addItem(R.string.impact_leve_3, quality == 2, false);
+                    dlg.addItem(R.string.impact_leve_c, quality == 3, true );
                     dlg.setCallback(new SettingsAlertDlg.DialogListener() {
                         @Override
                         public void onClick(int state) {

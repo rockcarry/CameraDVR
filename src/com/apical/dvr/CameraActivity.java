@@ -62,6 +62,9 @@ public class CameraActivity extends Activity
             mRecServ.onResume();
             updateCameraSwitchPreviewUI();
             updateButtonsState();
+            if (getIntent().getBooleanExtra("start_recording", false)) {
+                startRecording(true);
+            }
         }
 
         @Override
