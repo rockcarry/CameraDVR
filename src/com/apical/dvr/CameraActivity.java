@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
@@ -62,7 +63,7 @@ public class CameraActivity extends Activity
             mRecServ.onResume();
             updateCameraSwitchPreviewUI();
             updateButtonsState();
-            if (getIntent().getBooleanExtra("start_recording", false)) {
+            if (getIntent().getBooleanExtra("poweron_start_recording", false)) {
                 startRecording(true);
             }
         }
@@ -117,6 +118,8 @@ public class CameraActivity extends Activity
 
         // audo hide controls
         showUIControls(false);
+
+        SystemProperties.set("sys.dvr.run.state", "1");
     }
 
     @Override
@@ -132,6 +135,8 @@ public class CameraActivity extends Activity
 
         // remove all messages
         mHandler.removeMessages(0);
+
+        SystemProperties.set("sys.dvr.run.state", "0");
 
         super.onDestroy();
     }
@@ -149,6 +154,8 @@ public class CameraActivity extends Activity
 
         showUIControls(true );
         showUIControls(false);
+
+        SystemProperties.set("sys.dvr.run.state", "3");
     }
 
     @Override
@@ -157,6 +164,8 @@ public class CameraActivity extends Activity
         if (mRecServ != null) {
             mRecServ.onPause();
         }
+
+        SystemProperties.set("sys.dvr.run.state", "2");
     }
 
     @Override
