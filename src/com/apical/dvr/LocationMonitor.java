@@ -69,16 +69,12 @@ public class LocationMonitor {
 
     private void startReceivingLocationUpdates() {
         if (mLocationManager == null) {
-            mLocationManager = (android.location.LocationManager)
-                    mContext.getSystemService(Context.LOCATION_SERVICE);
+            mLocationManager = (LocationManager)mContext.getSystemService(Context.LOCATION_SERVICE);
         }
         if (mLocationManager != null) {
             try {
-                mLocationManager.requestLocationUpdates(
-                        android.location.LocationManager.GPS_PROVIDER,
-                        1000,
-                        1,
-                        mLocationListener);
+                mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                        1000, 1, mLocationListener);
                 mLocationManager.addGpsStatusListener(mGpsStatusListener);
             } catch (SecurityException ex) {
                 Log.i(TAG, "fail to request location update, ignore", ex);
@@ -86,6 +82,8 @@ public class LocationMonitor {
                 Log.d(TAG, "provider does not exist " + ex.getMessage());
             }
             Log.d(TAG, "startReceivingLocationUpdates");
+
+            mLastLocation = new Location(LocationManager.GPS_PROVIDER);
         }
     }
 
