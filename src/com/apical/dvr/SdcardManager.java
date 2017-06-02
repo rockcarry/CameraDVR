@@ -76,7 +76,7 @@ public class SdcardManager {
 
         Intent intent = new Intent(ExternalStorageFormatter.FORMAT_ONLY);
         intent.setComponent(ExternalStorageFormatter.COMPONENT_NAME);
-        intent.putExtra(StorageVolume.EXTRA_STORAGE_VOLUME, storageVolumes[0]);
+        intent.putExtra(StorageVolume.EXTRA_STORAGE_VOLUME, storageVolumes[1]);
         context.startService(intent);
     }
 
