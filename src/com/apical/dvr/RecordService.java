@@ -313,7 +313,7 @@ public class RecordService extends Service
     }
 
     public int getCamSwitchState() {
-        return mCamSwitchState;
+        return mMiscEventMon.isUsbCamConnected() ? mCamSwitchState : 2;
     }
 
     public void switchCamera() {
