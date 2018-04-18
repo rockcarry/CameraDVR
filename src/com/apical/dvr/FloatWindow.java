@@ -100,7 +100,7 @@ public class FloatWindow {
         mDvrButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent i = new Intent(mContext, CameraActivity.class);
+                Intent i = new Intent(mContext, MainActivity.class);
                 i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 mContext.startActivity(i);
             }

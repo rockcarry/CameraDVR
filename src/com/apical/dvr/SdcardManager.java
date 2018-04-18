@@ -26,7 +26,7 @@ public class SdcardManager {
     private final static String TAG = "SdcardManager";
 
     // dvr pathes
-    public static final String DVR_SD_ROOT      = "/mnt/extsd";
+    public static final String DVR_SD_ROOT      = "/mnt/sdcard";
     public static final String DIRECTORY_DCIM   = DVR_SD_ROOT    + "/DCIM";
     public static final String DIRECTORY_PHOTO  = DIRECTORY_DCIM + "/DVR_Photo";
     public static final String DIRECTORY_VIDEO  = DIRECTORY_DCIM + "/DVR_Video";

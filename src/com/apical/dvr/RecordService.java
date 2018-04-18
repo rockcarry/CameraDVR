@@ -28,7 +28,7 @@ public class RecordService extends Service
     private static final int MSG_SWITCH_NEXT_FILE = 2;
 
     private RecordBinder     mBinder              = null;
-    private MediaRecorder    mRecorder            = null;
+    private ffRecorder       mRecorder            = null;
     private boolean          mRecording           = false;
     private MediaSaver       mMediaSaver          = null;
     private String           mCurVideoFile        = null;
@@ -37,7 +37,7 @@ public class RecordService extends Service
     private SdcardManager    mSdManager           = null;
     private MiscEventMonitor mMiscEventMon        = null;
     private FloatWindow      mFloatWin            = null;
-    private CameraActivity   mActivity            = null;
+    private MainActivity     mActivity            = null;
     private int              mRecordDuration      = 0;
     private long             mRecordStartTime     = Long.MAX_VALUE;
     private String           mRecordFileNameA     = "";
@@ -60,7 +60,7 @@ public class RecordService extends Service
 
         mBinder     = new RecordBinder();
         mMediaSaver = new MediaSaver(this);
-        mRecorder   = MediaRecorder.getInstance();
+        mRecorder   = ffRecorder.getInstance(this);
 
         int quality    = Settings.get(Settings.KEY_VIDEO_QUALITY, Settings.DEF_VIDEO_QUALITY);
         int cam_main_w = quality == 0 ? 1280 : 1920;
@@ -109,8 +109,7 @@ public class RecordService extends Service
                     if (Settings.get(Settings.KEY_INSERTSD_AUTO_RECORD, Settings.DEF_INSERTSD_AUTO_RECORD) == 1) {
                         startRecording();
                     }
-                }
-                else {
+                } else {
                     stopRecording();
                 }
                 if (mActivity != null) {
@@ -140,8 +139,7 @@ public class RecordService extends Service
                         mRecordFileNameB = getNewRecordFileName(1);
                         mRecorder.startRecording( 2, mRecordFileNameB);
                         mRecorder.startRecording(-1, null);
-                    }
-                    else {
+                    } else {
                         mRecorder.stopRecording( 2);
                         mRecorder.stopRecording(-1);
                     }
@@ -220,7 +218,7 @@ public class RecordService extends Service
     }
 
     public class RecordBinder extends Binder {
-        public RecordService getService(CameraActivity activity) {
+        public RecordService getService(MainActivity activity) {
             mActivity = activity;
             return RecordService.this;
         }
@@ -320,8 +318,7 @@ public class RecordService extends Service
         if (mMiscEventMon.isUsbCamConnected()) {
             mCamSwitchState += 1;
             mCamSwitchState %= 4;
-        }
-        else {
+        } else {
             mCamSwitchState = 2;
         }
 
@@ -362,7 +359,7 @@ public class RecordService extends Service
     }
 
     public void takePhoto(int type) {
-        mRecorder.takePhoto(type, getNewPhotoFileName(type), new MediaRecorder.takePhotoCallback() {
+        mRecorder.takePhoto(type, getNewPhotoFileName(type), new ffRecorder.takePhotoCallback() {
             @Override
             public void onPhotoTaken(String filename, int width, int height) {
                 mMediaSaver.addImage(filename,
@@ -382,8 +379,7 @@ public class RecordService extends Service
             mRecorder.setPreviewTexture(0, st);
             if (st != null) {
                 mRecorder.startPreview(0);
-            }
-            else {
+            } else {
                 mRecorder.stopPreview(0);
             }
         }
@@ -394,8 +390,7 @@ public class RecordService extends Service
             mRecorder.setPreviewTexture(1, st);
             if (st != null) {
                 mRecorder.startPreview(1);
-            }
-            else {
+            } else {
                 mRecorder.stopPreview(1);
             }
         }

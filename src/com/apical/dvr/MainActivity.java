@@ -24,14 +24,14 @@ import android.util.Log;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 
-public class CameraActivity extends Activity
+public class MainActivity extends Activity
     implements View.OnClickListener,
                View.OnLongClickListener,
                SdcardManager.SdStateChangeListener,
                GSensorMonitor.ImpactEventListener,
                MiscEventMonitor.MiscEventListener
 {
-    private static final String TAG = "CameraActivity";
+    private static final String TAG = "MainActivity";
     private static final int MSG_AUTO_HIDE_UI_BUTTONS       = 1;
     private static final int MSG_UPDATE_RECORDING_INDICATOR = 2;
     private static final int MSG_UPDATE_IMPACT_LOCK_VIEW    = 3;
@@ -57,7 +57,7 @@ public class CameraActivity extends Activity
     private ServiceConnection mRecServiceConn = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder serv) {
-            mRecServ = ((RecordService.RecordBinder)serv).getService(CameraActivity.this);
+            mRecServ = ((RecordService.RecordBinder)serv).getService(MainActivity.this);
             mRecServ.setCamMainPreviewTexture(mCamMainTexture);
             mRecServ.setCamUsbPreviewTexture (mCamUsbTexture );
             mRecServ.onResume();
@@ -108,7 +108,7 @@ public class CameraActivity extends Activity
         mBtnCameraSW.setOnClickListener(this);
 
         // start record service
-        Intent i = new Intent(CameraActivity.this, RecordService.class);
+        Intent i = new Intent(MainActivity.this, RecordService.class);
         startService(i);
 
         // bind record service
@@ -130,7 +130,7 @@ public class CameraActivity extends Activity
         unbindService(mRecServiceConn);
 
         // stop record service
-        Intent i = new Intent(CameraActivity.this, RecordService.class);
+        Intent i = new Intent(MainActivity.this, RecordService.class);
         stopService(i);
 
         // remove all messages
