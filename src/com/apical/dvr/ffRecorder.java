@@ -2,132 +2,241 @@ package com.apical.dvr;
 
 import android.content.Context;
 import android.graphics.SurfaceTexture;
+import android.hardware.Camera;
+import android.media.CamcorderProfile;
+import android.media.MediaRecorder;
 import android.view.SurfaceView;
 import android.util.Log;
+import java.io.*;
 
 public class ffRecorder {
     private static final String TAG = "ffRecorder";
+    private SurfaceTexture     mSurTextNull= null;
+    private SurfaceView        mSurViewNull= null;
+    private Camera          [] mCameraDevs = new Camera          [2];
+    private boolean         [] mWaterMarkEn= new boolean         [2];
+    private MediaRecorder   [] mRecorders  = new MediaRecorder   [3];
+    private CamcorderProfile[] mProfiles   = new CamcorderProfile[3];
+    private Camera          [] mRecCamIdx  = new Camera          [3];
+    private boolean         [] mRecordEn   = new boolean         [3];
+    private boolean            mMicMute    = false;
+    private Context            mContext    = null;
 
     private static ffRecorder mSingleInstance = null;
-
     public static ffRecorder getInstance(Context context) {
         if (mSingleInstance == null) {
             mSingleInstance = new ffRecorder();
             mSingleInstance.mContext = context;
+            mSingleInstance.mSurTextNull = new SurfaceTexture(0);
+            mSingleInstance.mSurViewNull = new SurfaceView(context);
         }
         return mSingleInstance;
     }
 
-    private Context mContext         = null;
-    private long    mRecorderContext = 0;
-
     public void init(int cam_main_w, int cam_main_h, int cam_usb_w, int cam_usb_h) {
-        mRecorderContext = nativeInit(cam_main_w, cam_main_h, cam_usb_w, cam_usb_h);
-        nativeInitCallback(mRecorderContext);
+        try {
+            mCameraDevs[0] = Camera.open(0);
+            if (mCameraDevs[0] != null) {
+                Camera.Parameters params = mCameraDevs[0].getParameters();
+                params.setPreviewSize(cam_main_w, cam_main_h);
+                params.setPictureSize(cam_main_w, cam_main_h);
+                mCameraDevs[0].setParameters(params);
+                mCameraDevs[0].startPreview();
+            }
+        } catch (Exception e) {}
+
+        try {
+            mCameraDevs[1] = Camera.open(1);
+            if (mCameraDevs[1] != null) {
+                Camera.Parameters params = mCameraDevs[1].getParameters();
+                params.setPreviewSize(cam_usb_w, cam_usb_h);
+                params.setPictureSize(cam_usb_w, cam_usb_w);
+                mCameraDevs[1].setParameters(params);
+                mCameraDevs[1].startPreview();
+            }
+        } catch (Exception e) {}
+
+        mProfiles[0] = CamcorderProfile.get(0, CamcorderProfile.QUALITY_1080P);
+        mProfiles[1] = CamcorderProfile.get(0, CamcorderProfile.QUALITY_720P );
+        mProfiles[2] = CamcorderProfile.get(0, CamcorderProfile.QUALITY_480P );
+
+        for (int i=0; i<mRecorders.length; i++) {
+            mRecorders[i] = new MediaRecorder();
+        }
     }
 
     public void release() {
-        nativeFree(mRecorderContext);
         mSingleInstance = null;
+
+        for (MediaRecorder recorder : mRecorders) {
+            if (recorder != null) {
+                recorder.stop();
+                recorder.release();
+                recorder = null;
+            }
+        }
+
+        for (Camera cam : mCameraDevs) {
+            if (cam != null) {
+                cam.stopPreview();
+                cam.release();
+                cam = null;
+            }
+        }
     }
 
     public boolean getMicMute(int micidx) {
-        int mute = nativeGetMicMute(mRecorderContext, micidx);
-        return (nativeGetMicMute(mRecorderContext, micidx) == 1);
+        return mMicMute;
     }
 
     public void setMicMute(int micidx, boolean mute) {
-        nativeSetMicMute(mRecorderContext, micidx, mute ? 1 : 0);
+        for (MediaRecorder recorder : mRecorders) {
+            if (recorder != null) {
+                recorder.setAudioMute(mute);
+            }
+        }
+        mMicMute = mute;
     }
 
     public void resetCamera(int camidx, int w, int h, int frate) {
-        nativeResetCamera(mRecorderContext, camidx, w, h, frate);
+        if (mCameraDevs[camidx] == null) return;
+        try {
+            Camera.Parameters params = mCameraDevs[camidx].getParameters();
+            params.setPreviewSize(w, h);
+            params.setPictureSize(w, h);
+            mCameraDevs[camidx].stopWaterMark();
+            mCameraDevs[camidx].stopPreview();
+            mCameraDevs[camidx].setParameters(params);
+            mCameraDevs[camidx].startPreview();
+            if (mWaterMarkEn[camidx]) {
+                mCameraDevs[camidx].startWaterMark();
+            }
+        } catch (Exception e) { e.printStackTrace(); }
     }
 
     public void setWatermark(int camidx, int x, int y, String watermark) {
-        nativeSetWatermark(mRecorderContext, camidx, x, y, watermark);
+        if (mCameraDevs[camidx] == null) return;
+        try {
+            boolean en = watermark != null && !watermark.equals("");
+            if (mWaterMarkEn[camidx] != en) {
+                if (en) {
+                    mCameraDevs[camidx].startWaterMark();
+                } else {
+                    mCameraDevs[camidx].stopWaterMark ();
+                }
+                mWaterMarkEn[camidx] = en;
+            }
+            if (mWaterMarkEn[camidx]) {
+                String lines[] = watermark.split("\n");
+                String str     = String.format("80,80,0,80,150, %s", lines[1]);
+                mCameraDevs[camidx].setWaterMarkMultiple(str);
+            }
+        } catch (Exception e) { e.printStackTrace(); }
     }
 
     public void setPreviewDisplay(int camidx, SurfaceView win) {
-        nativeSetPreviewWindow(mRecorderContext, camidx, win);
+        if (mCameraDevs[camidx] == null) return;
+        if (win == null) win = mSurViewNull;
+        try { mCameraDevs[camidx].setPreviewDisplay(win.getHolder()); } catch (Exception e) { e.printStackTrace(); }
     }
 
     public void setPreviewTexture(int camidx, SurfaceTexture win) {
-        nativeSetPreviewTarget(mRecorderContext, camidx, win);
+        if (mCameraDevs[camidx] == null) return;
+        if (win == null) win = mSurTextNull;
+        try { mCameraDevs[camidx].setPreviewTexture(win); } catch (Exception e) { e.printStackTrace(); }
     }
 
     public void startPreview(int camidx) {
-        nativeStartPreview(mRecorderContext, camidx);
+        // do nothing
     }
 
     public void stopPreview(int camidx) {
-        nativeStopPreview(mRecorderContext, camidx);
+        // do nothing
     }
 
     public void startRecording(int encidx, String filename) {
-        nativeStartRecording(mRecorderContext, encidx, filename);
+        if (encidx == -1) return;
+        try {
+            if (mRecordEn [encidx] == false) {
+                mRecCamIdx[encidx].unlock();
+                mRecorders[encidx].setCamera(mRecCamIdx[encidx]);
+                mRecorders[encidx].setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
+                mRecorders[encidx].setVideoSource(MediaRecorder.VideoSource.CAMERA);
+                mRecorders[encidx].setProfile(mProfiles[encidx]);
+                mRecorders[encidx].setOutputFile(filename);
+                mRecorders[encidx].prepare();
+                mRecorders[encidx].setAudioMute(mMicMute);
+                mRecorders[encidx].start();
+                mRecordEn [encidx] = true;
+            } else {
+                mRecorders[encidx].setOutputFile(filename);
+            }
+        } catch (Exception e) { e.printStackTrace(); }
     }
 
     public void stopRecording(int encidx) {
-        nativeStopRecording(mRecorderContext, encidx);
+        if (encidx == -1) return;
+        try {
+            if (mRecordEn [encidx] == true) {
+                mRecorders[encidx].stop();
+                mRecCamIdx[encidx].lock();
+                mRecordEn [encidx] = false;
+            }
+        } catch (Exception e) { e.printStackTrace(); }
     }
 
     public void setAudioSource(int encidx, int source) {
-        nativeSetAudioSource(mRecorderContext, encidx, source);
+        // do nothing
     }
 
     public void setVideoSource(int encidx, int source) {
-        nativeSetVideoSource(mRecorderContext, encidx, source);
+        mRecCamIdx[encidx] = mCameraDevs[source];
     }
 
     public void takePhoto(int camidx, String filename, takePhotoCallback callback) {
-        mTakePhotoCB = callback; // setup callback
-        nativeTakePhoto(mRecorderContext, camidx, filename);
+        final int               idx = camidx;
+        final String            ffn = filename;
+        final takePhotoCallback fcb = callback;
+        mCameraDevs[camidx].takePicture(
+            new android.hardware.Camera.ShutterCallback() {
+                @Override
+                public void onShutter() {}
+            },
+            null,
+            new android.hardware.Camera.PictureCallback() {
+                @Override
+                public void onPictureTaken(byte [] jpegData, Camera camera) {
+                    if (writeFile(ffn, jpegData) && fcb != null) {
+                        Camera.Parameters params = mCameraDevs[idx].getParameters();
+                        android.hardware.Camera.Size size = params.getPreviewSize();
+                        fcb.onPhotoTaken(ffn, size.width, size.height);
+                    }
+                }
+            }
+        );
     }
 
     public interface takePhotoCallback {
         public void onPhotoTaken(String filename, int w, int h);
     }
 
-
-    //++ for take photo callback
-    private takePhotoCallback mTakePhotoCB = null;
-
-    private void internalTakePhotoCallback(String filename, int w, int h) {
-        if (mTakePhotoCB != null) {
-            mTakePhotoCB.onPhotoTaken(filename, w, h);
+    private static boolean writeFile(String path, byte[] data) {
+        boolean ret = false;
+        FileOutputStream out = null;
+        try {
+            out = new FileOutputStream(path);
+            out.write(data);
+            ret = true;
+        } catch (Exception e) {
+            Log.e(TAG, "failed to write file data !", e);
+        } finally {
+            try {
+                out.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
-    }
-
-    private native void nativeInitCallback(long ctxt);
-    //-- for take photo callback
-
-
-    private static native long nativeInit(int cam_main_w, int cam_main_h, int cam_usb_w, int cam_usb_h);
-    private static native void nativeFree(long ctxt);
-
-    private static native int  nativeGetMicMute (long ctxt, int micidx);
-    private static native void nativeSetMicMute (long ctxt, int micidx, int mute);
-
-    private static native void nativeResetCamera (long ctxt, int camidx, int w, int h, int frate);
-    private static native void nativeSetWatermark(long ctxt, int camidx, int x, int y, String watermark);
-
-    private static native void nativeSetPreviewWindow(long ctxt, int camidx, Object win);
-    private static native void nativeSetPreviewTarget(long ctxt, int camidx, Object win);
-
-    private static native void nativeStartPreview(long ctxt, int camidx);
-    private static native void nativeStopPreview (long ctxt, int camidx);
-
-    private static native void nativeStartRecording(long ctxt, int encidx, String filename);
-    private static native void nativeStopRecording (long ctxt, int encidx);
-
-    private static native void nativeSetAudioSource(long ctxt, int encidx, int source);
-    private static native void nativeSetVideoSource(long ctxt, int encidx, int source);
-
-    private static native void nativeTakePhoto(long ctxt, int camidx, String filename);
-
-    static {
-        System.loadLibrary("ffrecorder_jni");
+        return ret;
     }
 }
 
