@@ -70,7 +70,6 @@ public class ffRecorder {
 
         for (MediaRecorder recorder : mRecorders) {
             if (recorder != null) {
-                recorder.stop();
                 recorder.release();
                 recorder = null;
             }
@@ -78,7 +77,6 @@ public class ffRecorder {
 
         for (Camera cam : mCameraDevs) {
             if (cam != null) {
-                cam.stopPreview();
                 cam.release();
                 cam = null;
             }
