@@ -339,7 +339,6 @@ public class RecordService extends Service
 
     public void setCamMainVideoQuality(int quality) {
         mRecorder.resetCamera(0, quality == 0 ? 1280 : 1920, quality == 0 ? 720 : 1080, -1);
-        mRecorder.startPreview(0);
     }
 
     public long getImpactTime() { return mImpactTimeStamp; }
