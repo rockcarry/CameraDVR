@@ -433,7 +433,7 @@ public class RecordService extends Service
                 SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss\n");
                 float         speed = mLocationMon.getCurrentSpeed();
                 String    watermark = df.format(date) + (speed < 0 ? " - - - " : (" " + (int)(speed * 3.6) + " KM/H"));
-                if (mWatermarkEnable) {
+                if (mWatermarkEnable && mRecorder != null) {
                     mRecorder.setWatermark(0, 88, 68, watermark);
                 }
                 break;
