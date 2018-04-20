@@ -34,4 +34,21 @@
 
     <string name="ok">确定</string>
     <string name="cancel">取消</string>
+
+    <string name="browse_dvr_file">录像文件</string>
+
+    <string-array name="category_one_camera">
+        <item>全部录像</item>
+        <item>加锁录像</item>
+        <item>照片</item>
+    </string-array>
+
+    <string-array name="category_two_camera">
+        <item>全部录像A</item>
+        <item>加锁录像A</item>
+        <item>照片A</item>
+        <item>全部录像B</item>
+        <item>加锁录像B</item>
+        <item>照片B</item>
+    </string-array>
 </resources>

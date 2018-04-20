@@ -34,4 +34,21 @@
 
     <string name="ok">ok</string>
     <string name="cancel">cancel</string>
+
+    <string name="browse_dvr_file">DVR Files</string>
+
+    <string-array name="category_one_camera">
+        <item>All Video</item>
+        <item>Locked Video</item>
+        <item>Photo</item>
+    </string-array>
+
+    <string-array name="category_two_camera">
+        <item>All VideoA</item>
+        <item>Locked VideoA</item>
+        <item>PhotoA</item>
+        <item>All VideoB</item>
+        <item>Locked VideoB</item>
+        <item>PhotoB</item>
+    </string-array>
 </resources>
