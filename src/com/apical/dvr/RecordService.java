@@ -39,7 +39,8 @@ public class RecordService extends Service
     private FloatWindow      mFloatWin            = null;
     private MainActivity     mActivity            = null;
     private int              mRecordDuration      = 0;
-    private long             mRecordStartTime     = Long.MAX_VALUE;
+    private long             mRecordStartTimeA    = 0;
+    private long             mRecordStartTimeB    = 0;
     private String           mRecordFileNameA     = "";
     private String           mRecordFileNameB     = "";
     private boolean          mWatermarkEnable     = false;
@@ -135,7 +136,8 @@ public class RecordService extends Service
                     mActivity.onUsbCamStateChanged(connected);
                 }
                 if (mRecording) {
-                    if (connected) {
+                    if (connected && SystemClock.uptimeMillis() < mRecordStartTimeA + 55000) {
+                        mRecordStartTimeB= SystemClock.uptimeMillis();
                         mRecordFileNameB = getNewRecordFileName(1);
                         mRecorder.startRecording( 2, mRecordFileNameB);
                         mRecorder.startRecording(-1, null);
@@ -241,7 +243,8 @@ public class RecordService extends Service
         mImpactSaveFlag = false;
 
         // update mRecordingStartTime
-        mRecordStartTime = SystemClock.uptimeMillis();
+        mRecordStartTimeA = SystemClock.uptimeMillis();
+        mRecordStartTimeB = SystemClock.uptimeMillis();
         mHandler.sendEmptyMessageDelayed(MSG_SWITCH_NEXT_FILE, mRecordDuration);
 
         // start recording
@@ -282,11 +285,15 @@ public class RecordService extends Service
         mRecorder.stopRecording( 1);
         mRecorder.stopRecording(-1);
 
+        long stoptime = SystemClock.uptimeMillis();
         if (true) {
-            mMediaSaver.addVideo(mRecordFileNameA, 0, 0, mImpactSaveFlag);
+            int quality = Settings.get(Settings.KEY_VIDEO_QUALITY, Settings.DEF_VIDEO_QUALITY);
+            int w = quality == 0 ? 1280 : 1920;
+            int h = quality == 0 ? 720  : 1080;
+            mMediaSaver.addVideo(mRecordFileNameA, System.currentTimeMillis(), w, h, stoptime - mRecordStartTimeA, mImpactSaveFlag);
         }
         if (mMiscEventMon.isUsbCamConnected()) {
-            mMediaSaver.addVideo(mRecordFileNameB, 0, 0, mImpactSaveFlag);
+            mMediaSaver.addVideo(mRecordFileNameB, System.currentTimeMillis(), 640, 480, stoptime - mRecordStartTimeB, mImpactSaveFlag);
         }
 
         // update float window
@@ -354,7 +361,7 @@ public class RecordService extends Service
     }
 
     public long getRecordingStartTime() {
-        return mRecordStartTime;
+        return mRecordStartTimeA;
     }
 
     public void takePhoto(int type) {
@@ -426,6 +433,8 @@ public class RecordService extends Service
     private Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
+            final long last_start_a;
+            final long last_start_b;
             switch (msg.what) {
             case MSG_UPDATE_WATERMARK:
                 mHandler.sendEmptyMessageDelayed(MSG_UPDATE_WATERMARK, 1000);
@@ -440,7 +449,10 @@ public class RecordService extends Service
 
             case MSG_SWITCH_NEXT_FILE:
                 // update mRecordStartTime
-                mRecordStartTime = SystemClock.uptimeMillis();
+                last_start_a = mRecordStartTimeA;
+                last_start_b = mRecordStartTimeB;
+                mRecordStartTimeA = SystemClock.uptimeMillis();
+                mRecordStartTimeB = SystemClock.uptimeMillis();
                 mHandler.sendEmptyMessageDelayed(MSG_SWITCH_NEXT_FILE, mRecordDuration);
 
                 //++ switch to next record file
@@ -449,11 +461,10 @@ public class RecordService extends Service
                     public void run() {
                         String newNameA = getNewRecordFileName(0);
                         String newNameB = getNewRecordFileName(1);
+                        int    quality  = Settings.get(Settings.KEY_VIDEO_QUALITY, Settings.DEF_VIDEO_QUALITY);
 
                         if (true) {
-                            int quality = Settings.get(Settings.KEY_VIDEO_QUALITY, Settings.DEF_VIDEO_QUALITY);
-                            int encidx  = quality == 0 ? 1 : 0;
-                            mRecorder.startRecording(encidx, newNameA);
+                            mRecorder.startRecording(quality == 0 ? 1 : 0, newNameA);
                         }
                         if (mMiscEventMon.isUsbCamConnected()) {
                             mRecorder.startRecording(2, newNameB);
@@ -462,11 +473,14 @@ public class RecordService extends Service
                             mRecorder.startRecording(-1, null);
                         }
 
+                        long stoptime = SystemClock.uptimeMillis();
                         if (true) {
-                            mMediaSaver.addVideo(mRecordFileNameA, 0, 0, mImpactSaveFlag);
+                            int w = quality == 0 ? 1280 : 1920;
+                            int h = quality == 0 ? 720  : 1080;
+                            mMediaSaver.addVideo(mRecordFileNameA, System.currentTimeMillis(), w, h, stoptime - last_start_a, mImpactSaveFlag);
                         }
                         if (mMiscEventMon.isUsbCamConnected()) {
-                            mMediaSaver.addVideo(mRecordFileNameB, 0, 0, mImpactSaveFlag);
+                            mMediaSaver.addVideo(mRecordFileNameB, System.currentTimeMillis(), 640, 480, stoptime - last_start_b, mImpactSaveFlag);
                         }
 
                         mRecordFileNameA = newNameA;

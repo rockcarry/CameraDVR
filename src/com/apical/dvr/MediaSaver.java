@@ -57,8 +57,8 @@ public class MediaSaver {
         new ImageDelTask(path, mResolver).execute();
     }
 
-    public void addVideo(String path, int w, int h, boolean impact) {
-        new VideoSaveTask(path, w, h, impact, mResolver).execute();
+    public void addVideo(String path, long date, int w, int h, long duration, boolean impact) {
+        new VideoSaveTask(path, date, w, h, duration, impact, mResolver).execute();
     }
 
     public void delVideo(String path) {
@@ -66,12 +66,12 @@ public class MediaSaver {
     }
 
     private class ImageSaveTask extends AsyncTask <Void, Void, Uri> {
-        private final String path;
-        private final long date;
-        private final Location loc;
+        private String path;
+        private long date;
+        private Location loc;
         private int width, height;
-        private final int orientation;
-        private final ContentResolver resolver;
+        private int orientation;
+        private ContentResolver resolver;
 
         public ImageSaveTask(String path, long date, Location loc, int width, int height,
                              int orientation, ContentResolver resolver) {
@@ -134,7 +134,7 @@ public class MediaSaver {
 
     private class ImageDelTask extends AsyncTask <Void, Void, Uri> {
         private String path;
-        private final ContentResolver resolver;
+        private ContentResolver resolver;
 
         public ImageDelTask(String path, ContentResolver r) {
             this.path     = path;
@@ -156,15 +156,19 @@ public class MediaSaver {
 
     private class VideoSaveTask extends AsyncTask <Void, Void, Uri> {
         private String  path;
+        private long    date;
         private int     width;
         private int     height;
+        private long    duration;
         private boolean impact;
-        private final ContentResolver resolver;
+        private ContentResolver resolver;
 
-        public VideoSaveTask(String path, int w, int h, boolean impact, ContentResolver r) {
+        public VideoSaveTask(String path, long date, int w, int h, long duration, boolean impact, ContentResolver r) {
             this.path     = path;
+            this.date     = date;
             this.width    = w;
             this.height   = h;
+            this.duration = duration;
             this.impact   = impact;
             this.resolver = r;
         }
@@ -186,6 +190,10 @@ public class MediaSaver {
                 values = new ContentValues();
                 values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4");
                 values.put(MediaStore.Video.Media.DATA, path);
+                values.put(MediaStore.Video.Media.DATE_TAKEN, date);
+                values.put(MediaStore.Video.Media.WIDTH, width);
+                values.put(MediaStore.Video.Media.HEIGHT, height);
+                values.put(MediaStore.Video.Media.DURATION, duration);
                 uri = resolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
                 resolver.update(uri, values, null, null);
             } catch (Exception e) {
@@ -207,7 +215,7 @@ public class MediaSaver {
 
     private class VideoDelTask extends AsyncTask <Void, Void, Uri> {
         private String path;
-        private final ContentResolver resolver;
+        private ContentResolver resolver;
 
         public VideoDelTask(String path, ContentResolver r) {
             this.path     = path;
