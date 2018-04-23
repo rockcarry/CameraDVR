@@ -73,6 +73,10 @@ public class MediaSaver {
         new VideoDelTask(path, mResolver).execute();
     }
 
+    public void setVideoLockType(String path, boolean lock) {
+        new VideoSetLockTask(path, lock, mResolver).execute();
+    }
+
     private class ImageSaveTask extends AsyncTask <Void, Void, Uri> {
         private String path;
         private long date;
@@ -234,6 +238,40 @@ public class MediaSaver {
         protected Uri doInBackground(Void... v) {
             String params[] = new String[] { this.path };
             this.resolver.delete(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, MediaStore.Video.Media.DATA + " LIKE ?", params);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Uri uri) {
+            // todo...
+        }
+    }
+
+    private class VideoSetLockTask extends AsyncTask <Void, Void, Uri> {
+        private String  path;
+        private boolean lock;
+        private ContentResolver resolver;
+
+        public VideoSetLockTask(String path, boolean lock, ContentResolver r) {
+            this.path     = path;
+            this.lock     = lock;
+            this.resolver = r;
+        }
+
+        @Override
+        protected Uri doInBackground(Void... v) {
+            if (this.lock == this.path.startsWith(SdcardManager.DIRECTORY_IMPACT)) return null;
+
+            String newpath;
+            if (this.lock) {
+                newpath = this.path.replace(SdcardManager.DIRECTORY_VIDEO, SdcardManager.DIRECTORY_IMPACT);
+            } else {
+                newpath = this.path.replace(SdcardManager.DIRECTORY_IMPACT, SdcardManager.DIRECTORY_VIDEO);
+            }
+            String params[] = new String[] { this.path };
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Video.Media.DATA, newpath);
+            this.resolver.update(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values, MediaStore.Video.Media.DATA + " LIKE ?", params);
             return null;
         }
 
