@@ -42,6 +42,14 @@ public class MediaSaver {
     // for media save
     private ContentResolver mResolver = null;
 
+    private static MediaSaver mInstance = null;
+    public static MediaSaver getInstance(Context context) {
+        if (mInstance == null) {
+            mInstance = new MediaSaver(context);
+        }
+        return mInstance;
+    }
+
     public MediaSaver(Context context) {
         mResolver = context.getContentResolver();
     }

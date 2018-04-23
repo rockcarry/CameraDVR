@@ -51,4 +51,11 @@
         <item>Locked VideoB</item>
         <item>PhotoB</item>
     </string-array>
+
+    <string name="multi_select">Multi Selection</string>
+    <string name="open">Open</string>
+    <string name="play">Play</string>
+    <string name="lock">Lock</string>
+    <string name="unlock">Unlock</string>
+    <string name="delete">Delete</string>
 </resources>

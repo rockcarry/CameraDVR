@@ -61,6 +61,7 @@ public class RecordService extends Service
 
         mBinder     = new RecordBinder();
         mMediaSaver = new MediaSaver(this);
+        mMediaSaver = MediaSaver.getInstance(this);
         mRecorder   = ffRecorder.getInstance(this);
 
         int quality    = Settings.get(Settings.KEY_VIDEO_QUALITY, Settings.DEF_VIDEO_QUALITY);
@@ -424,10 +425,6 @@ public class RecordService extends Service
 
     public void onPause() {
         mFloatWin.showFloat(mRecording);
-    }
-
-    public MediaSaver getMediaSaver() {
-        return mMediaSaver;
     }
 
     private Handler mHandler = new Handler() {

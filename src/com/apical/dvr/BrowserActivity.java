@@ -1,8 +1,10 @@
 package com.apical.dvr;
 
+import android.app.AlertDialog;
 import android.app.TabActivity;
 import android.content.Context;
 import android.content.ContentResolver;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.ContentObserver;
@@ -303,6 +305,40 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
 
     @Override
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+        String[] items = null;
+        if (mIsPhoto) {
+            items = new String[3];
+            items[0] = mContext.getString(R.string.open);
+            items[1] = mContext.getString(R.string.multi_select);
+            items[2] = mContext.getString(R.string.delete);
+        } else {
+            items = new String[4];
+            items[0] = mContext.getString(R.string.play);
+            items[1] = mContext.getString(R.string.multi_select);
+            items[2] = mMediaPath.startsWith(SdcardManager.DIRECTORY_IMPACT) ? mContext.getString(R.string.unlock) : mContext.getString(R.string.lock);
+            items[3] = mContext.getString(R.string.delete);
+        }
+
+        final int final_pos = position;
+        AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+        builder.setItems(items, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                MediaListItem item = mMediaList.get(final_pos);
+                if (mIsPhoto) {
+                    switch (which) {
+                    case 0: openPhoto(mContext, item.fl_path, item.fl_name); break;
+                    case 2: MediaSaver.getInstance(mContext).delImage(item.fl_path); break;
+                    }
+                } else {
+                    switch (which) {
+                    case 0: playVideo(mContext, item.fl_path, item.fl_name); break;
+                    case 3: MediaSaver.getInstance(mContext).delVideo(item.fl_path); break;
+                    }
+                }
+            }
+        });
+        builder.create().show();
         return true;
     }
 

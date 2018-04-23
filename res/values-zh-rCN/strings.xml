@@ -51,4 +51,11 @@
         <item>加锁录像B</item>
         <item>照片B</item>
     </string-array>
+
+    <string name="multi_select">多选</string>
+    <string name="open">打开</string>
+    <string name="play">播放</string>
+    <string name="lock">加锁</string>
+    <string name="unlock">解锁</string>
+    <string name="delete">删除</string>
 </resources>
