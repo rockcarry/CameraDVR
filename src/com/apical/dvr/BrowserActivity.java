@@ -3,11 +3,13 @@ package com.apical.dvr;
 import android.app.TabActivity;
 import android.content.Context;
 import android.content.ContentResolver;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.ContentObserver;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -16,6 +18,7 @@ import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -96,6 +99,19 @@ public class BrowserActivity extends TabActivity
         mListViewLockedVideoB.setAdapter(mAdapterLockedVideoB);
         mListViewPhotoB      .setAdapter(mAdapterPhotoB      );
 
+        mListViewNormalVideoA.setOnItemClickListener(mAdapterNormalVideoA);
+        mListViewLockedVideoA.setOnItemClickListener(mAdapterLockedVideoA);
+        mListViewPhotoA      .setOnItemClickListener(mAdapterPhotoA);
+        mListViewNormalVideoB.setOnItemClickListener(mAdapterNormalVideoB);
+        mListViewLockedVideoB.setOnItemClickListener(mAdapterLockedVideoB);
+        mListViewPhotoB      .setOnItemClickListener(mAdapterPhotoB);
+        mListViewNormalVideoA.setOnItemLongClickListener(mAdapterNormalVideoA);
+        mListViewLockedVideoA.setOnItemLongClickListener(mAdapterLockedVideoA);
+        mListViewPhotoA      .setOnItemLongClickListener(mAdapterPhotoA);
+        mListViewNormalVideoB.setOnItemLongClickListener(mAdapterNormalVideoB);
+        mListViewLockedVideoB.setOnItemLongClickListener(mAdapterLockedVideoB);
+        mListViewPhotoB      .setOnItemLongClickListener(mAdapterPhotoB);
+
         mAdapterNormalVideoA.reload();
         mAdapterLockedVideoA.reload();
         mAdapterPhotoA      .reload();
@@ -150,7 +166,7 @@ public class BrowserActivity extends TabActivity
     };
 }
 
-class MediaListAdapter extends BaseAdapter {
+class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener {
     private Context             mContext;
     private ContentResolver     mResolver;
     private List<MediaListItem> mMediaList;
@@ -193,6 +209,7 @@ class MediaListAdapter extends BaseAdapter {
             if (cursor.moveToFirst()) {
                 do {
                     MediaListItem item= new MediaListItem();
+                    item.fl_path      = cursor.getString(0);
                     item.fl_name      = cursor.getString(1);
                     item.fl_detail1   = String.format("%10s", String.format("%dx%d", cursor.getInt(2), cursor.getInt(3)));
                     item.fl_detail2   = "";
@@ -210,6 +227,7 @@ class MediaListAdapter extends BaseAdapter {
             if (cursor.moveToFirst()) {
                 do {
                     MediaListItem item= new MediaListItem();
+                    item.fl_path      = cursor.getString(0);
                     item.fl_name      = cursor.getString(1);
                     item.fl_detail1   = String.format("%5dp", cursor.getInt(3));
                     item.fl_detail2   = formatDurationString(cursor.getInt(4));
@@ -273,6 +291,21 @@ class MediaListAdapter extends BaseAdapter {
         return position;
     }
 
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        MediaListItem item = mMediaList.get(position);
+        if (mIsPhoto) {
+            openPhoto(mContext, item.fl_path, item.fl_name);
+        } else {
+            playVideo(mContext, item.fl_path, item.fl_name);
+        }
+    }
+
+    @Override
+    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+        return true;
+    }
+
     public static String formatDurationString(int duration) {
         int min = duration / 60000;
         int sec = duration % 60000 / 1000;
@@ -301,9 +334,24 @@ class MediaListAdapter extends BaseAdapter {
         return String.format("%8s", str);
     }
 
+    public static void openPhoto(Context context, String path, String title) {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(Uri.parse("file://" + path), "image/*");
+        context.startActivity(intent);
+    }
+
+    public static void playVideo(Context context, String path, String title) {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(Uri.parse("file://" + path), "video/*");
+        intent.putExtra(MediaStore.PLAYLIST_TYPE, MediaStore.PLAYLIST_TYPE_CUR_FOLDER);
+        intent.putExtra(MediaStore.EXTRA_FINISH_ON_COMPLETION, false);
+        context.startActivity(intent);
+    }
+
     class MediaListItem {
         Bitmap  fl_bitmap;
         int     fl_thumb;
+        String  fl_path;
         String  fl_name;
         String  fl_detail1;
         String  fl_detail2;
