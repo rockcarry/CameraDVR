@@ -312,14 +312,14 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
         if (mIsPhoto) {
             items = new String[3];
             items[0] = mContext.getString(R.string.open);
-            items[1] = mContext.getString(R.string.multi_select);
-            items[2] = mContext.getString(R.string.delete);
+            items[1] = mContext.getString(R.string.delete);
+            items[2] = mContext.getString(R.string.multi_select);
         } else {
             items = new String[4];
             items[0] = mContext.getString(R.string.play);
-            items[1] = mContext.getString(R.string.multi_select);
-            items[2] = final_lock ? mContext.getString(R.string.unlock) : mContext.getString(R.string.lock);
-            items[3] = mContext.getString(R.string.delete);
+            items[1] = final_lock ? mContext.getString(R.string.unlock) : mContext.getString(R.string.lock);
+            items[2] = mContext.getString(R.string.delete);
+            items[3] = mContext.getString(R.string.multi_select);
         }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
@@ -330,13 +330,13 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
                 if (mIsPhoto) {
                     switch (which) {
                     case 0: openPhoto(mContext, item.fl_path, item.fl_name); break;
-                    case 2: MediaSaver.getInstance(mContext).delImage(item.fl_path); break;
+                    case 1: MediaSaver.getInstance(mContext).delImage(item.fl_path); break;
                     }
                 } else {
                     switch (which) {
                     case 0: playVideo(mContext, item.fl_path, item.fl_name); break;
-                    case 2: MediaSaver.getInstance(mContext).setVideoLockType(item.fl_path, !final_lock); break;
-                    case 3: MediaSaver.getInstance(mContext).delVideo(item.fl_path); break;
+                    case 1: MediaSaver.getInstance(mContext).setVideoLockType(item.fl_path, !final_lock); break;
+                    case 2: MediaSaver.getInstance(mContext).delVideo(item.fl_path); break;
                     }
                 }
             }
