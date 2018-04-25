@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TabHost xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/tabhost"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+
+    <TabWidget
+        android:id="@android:id/tabs"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" />
+
+    <FrameLayout
+        android:id="@android:id/tabcontent"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="vertical"
+        android:layout_marginTop="50dp" >
+        <LinearLayout android:id="@+id/tab_normal_video_a"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+            <ListView
+                android:id="@+id/lv_normal_video_a"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true" >
+            </ListView>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/tab_locked_video_a"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+            <ListView
+                android:id="@+id/lv_locked_video_a"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" >
+            </ListView>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/tab_photo_a"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+            <ListView
+                android:id="@+id/lv_photo_a"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" >
+            </ListView>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/tab_normal_video_b"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+            <ListView
+                android:id="@+id/lv_normal_video_b"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" >
+            </ListView>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/tab_locked_video_b"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+            <ListView
+                android:id="@+id/lv_locked_video_b"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" >
+            </ListView>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/tab_photo_b"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+            <ListView
+                android:id="@+id/lv_photo_b"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" >
+            </ListView>
+        </LinearLayout>
+    </FrameLayout>
+
+</TabHost>

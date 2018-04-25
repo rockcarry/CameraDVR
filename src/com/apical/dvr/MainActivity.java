@@ -194,6 +194,11 @@ public class MainActivity extends Activity
                 dlg.show();
             }
             break;
+        case R.id.btn_dvr_gallery: {
+                Intent intent = new Intent(this, BrowserActivity.class);
+                startActivity(intent);
+            }
+            break;
         }
     }
 
