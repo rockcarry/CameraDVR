@@ -99,7 +99,7 @@ public class SettingsDialog extends Dialog {
         findViewById(R.id.distance_detect_level).setOnClickListener(settingsClickListener);
 
         { // video quality
-            int[] ids   = {R.string.video_quality_720p, R.string.video_quality_1080p};
+            int[] ids   = {R.string.video_quality_480p, R.string.video_quality_720p};
             int   state = Settings.get(Settings.KEY_VIDEO_QUALITY, Settings.DEF_VIDEO_QUALITY);
             mVideoQualityText.setText(ids[state]);
         }
@@ -183,12 +183,12 @@ public class SettingsDialog extends Dialog {
                     if (dlg == null) return;
                     int quality = Settings.get(Settings.KEY_VIDEO_QUALITY, Settings.DEF_VIDEO_QUALITY);
                     dlg.setTitle(R.string.video_quality);
-                    dlg.addItem(R.string.video_quality_720p , quality == 0, false);
-                    dlg.addItem(R.string.video_quality_1080p, quality == 1, true );
+                    dlg.addItem(R.string.video_quality_480p, quality == 0, false);
+                    dlg.addItem(R.string.video_quality_720p, quality == 1, true );
                     dlg.setCallback(new SettingsAlertDlg.DialogListener() {
                         @Override
                         public void onClick(int state) {
-                            int[] ids = {R.string.video_quality_720p, R.string.video_quality_1080p};
+                            int[] ids = {R.string.video_quality_480p, R.string.video_quality_720p};
                             mRecServ.setCamMainVideoQuality(state);
                             Settings.set(Settings.KEY_VIDEO_QUALITY, state);
                             mVideoQualityText.setText(ids[state]);
@@ -249,7 +249,7 @@ public class SettingsDialog extends Dialog {
                             SystemProperties.set(Settings.KEY_POWERON_RECORD, Settings.DEF_POWERON_RECORD);
 
                             // quality
-                            int[] quality_ids  = {R.string.video_quality_720p, R.string.video_quality_1080p};
+                            int[] quality_ids  = {R.string.video_quality_480p, R.string.video_quality_720p};
                             mVideoQualityText.setText(quality_ids[Settings.DEF_VIDEO_QUALITY]);
                             mRecServ.setCamMainVideoQuality(Settings.DEF_VIDEO_QUALITY);
 

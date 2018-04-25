@@ -60,13 +60,14 @@ public class SdcardManager {
     }
 
     public static boolean isSdcardInsert() {
+        /*
         String state = Environment.getStorageState(new File(DVR_SD_ROOT));
         if (!Environment.MEDIA_MOUNTED.equals(state)) {
             return false;
         }
         if (Environment.MEDIA_CHECKING.equals(state)) {
             return false;
-        }
+        }*/
         return true;
     }
 

@@ -63,8 +63,8 @@ public class RecordService extends Service
         mRecorder   = ffRecorder.getInstance(this);
 
         int quality    = Settings.get(Settings.KEY_VIDEO_QUALITY, Settings.DEF_VIDEO_QUALITY);
-        int cam_main_w = quality == 0 ? 1280 : 1920;
-        int cam_main_h = quality == 0 ? 720  : 1080;
+        int cam_main_w = quality == 0 ? 640 : 1280;
+        int cam_main_h = quality == 0 ? 480 : 720 ;
         mRecorder.init(cam_main_w, cam_main_h, 0, 0);
 
         // encoder0 (1080p encoder), audio source is mic, video source is main camera
@@ -338,7 +338,7 @@ public class RecordService extends Service
     }
 
     public void setCamMainVideoQuality(int quality) {
-        mRecorder.resetCamera(0, quality == 0 ? 1280 : 1920, quality == 0 ? 720 : 1080, -1);
+        mRecorder.resetCamera(0, quality == 0 ? 640 : 1280, quality == 0 ? 480 : 720, -1);
     }
 
     public long getImpactTime() { return mImpactTimeStamp; }

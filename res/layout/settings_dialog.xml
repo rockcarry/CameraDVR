@@ -181,6 +181,7 @@
                 android:layout_marginRight="@dimen/settings_option_margin"
                 android:layout_marginLeft="@dimen/settings_option_margin"
                 android:background="@color/parting_line_dark"
+                android:visibility="gone"
                 />
 
             <LinearLayout
@@ -191,6 +192,7 @@
                 android:layout_marginLeft="@dimen/settings_option_margin"
                 android:orientation="horizontal"
                 android:background="@drawable/option"
+                android:visibility="gone"
                 >
                 <TextView
                     android:layout_width="wrap_content"

@@ -56,9 +56,9 @@ public class ffRecorder {
             }
         } catch (Exception e) {}
 
-        mProfiles[0] = CamcorderProfile.get(0, CamcorderProfile.QUALITY_1080P);
-        mProfiles[1] = CamcorderProfile.get(0, CamcorderProfile.QUALITY_720P );
-        mProfiles[2] = CamcorderProfile.get(0, CamcorderProfile.QUALITY_480P );
+        mProfiles[0] = CamcorderProfile.get(0, CamcorderProfile.QUALITY_720P);
+        mProfiles[1] = CamcorderProfile.get(0, CamcorderProfile.QUALITY_480P);
+        mProfiles[2] = CamcorderProfile.get(0, CamcorderProfile.QUALITY_480P);
 
         for (int i=0; i<mRecorders.length; i++) {
             mRecorders[i] = new MediaRecorder();
@@ -88,11 +88,6 @@ public class ffRecorder {
     }
 
     public void setMicMute(int micidx, boolean mute) {
-        for (MediaRecorder recorder : mRecorders) {
-            if (recorder != null) {
-                recorder.setAudioMute(mute);
-            }
-        }
         mMicMute = mute;
     }
 
@@ -102,34 +97,14 @@ public class ffRecorder {
             Camera.Parameters params = mCameraDevs[camidx].getParameters();
             params.setPreviewSize(w, h);
             params.setPictureSize(w, h);
-            mCameraDevs[camidx].stopWaterMark();
             mCameraDevs[camidx].stopPreview();
             mCameraDevs[camidx].setParameters(params);
-            mCameraDevs[camidx].startPreview();
-            if (mWaterMarkEn[camidx]) {
-                mCameraDevs[camidx].startWaterMark();
-            }
         } catch (Exception e) { e.printStackTrace(); }
     }
 
     public void setWatermark(int camidx, int x, int y, String watermark) {
         if (mCameraDevs[camidx] == null) return;
-        try {
-            boolean en = watermark != null && !watermark.equals("");
-            if (mWaterMarkEn[camidx] != en) {
-                if (en) {
-                    mCameraDevs[camidx].startWaterMark();
-                } else {
-                    mCameraDevs[camidx].stopWaterMark ();
-                }
-                mWaterMarkEn[camidx] = en;
-            }
-            if (mWaterMarkEn[camidx]) {
-                String lines[] = watermark.split("\n");
-                String str     = String.format("80,80,0,80,150, %s", lines[1]);
-                mCameraDevs[camidx].setWaterMarkMultiple(str);
-            }
-        } catch (Exception e) { e.printStackTrace(); }
+        mWaterMarkEn[camidx] = watermark != null && !watermark.equals("");
     }
 
     public void setPreviewDisplay(int camidx, SurfaceView win) {
@@ -154,6 +129,7 @@ public class ffRecorder {
 
     public void startRecording(int encidx, String filename) {
         if (encidx == -1) return;
+        stopRecording(encidx); // stop first
         try {
             if (mRecordEn [encidx] == false) {
                 mRecCamIdx[encidx].unlock();
@@ -163,7 +139,6 @@ public class ffRecorder {
                 mRecorders[encidx].setProfile(mProfiles[encidx]);
                 mRecorders[encidx].setOutputFile(filename);
                 mRecorders[encidx].prepare();
-                mRecorders[encidx].setAudioMute(mMicMute);
                 mRecorders[encidx].start();
                 mRecordEn [encidx] = true;
             } else {
