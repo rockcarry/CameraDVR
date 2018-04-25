@@ -4,6 +4,7 @@
     <string name="settings">settings</string>
 
     <string name="video_quality">video quality</string>
+    <string name="video_quality_480p">480P</string>
     <string name="video_quality_720p">720P</string>
     <string name="video_quality_1080p">1080P</string>
     <string name="video_duration">video duration</string>
@@ -34,4 +35,28 @@
 
     <string name="ok">ok</string>
     <string name="cancel">cancel</string>
+
+    <string name="browse_dvr_file">DVR Files</string>
+
+    <string-array name="category_one_camera">
+        <item>Normal Video</item>
+        <item>Locked Video</item>
+        <item>Photo</item>
+    </string-array>
+
+    <string-array name="category_two_camera">
+        <item>Normal VideoA</item>
+        <item>Locked VideoA</item>
+        <item>PhotoA</item>
+        <item>Normal VideoB</item>
+        <item>Locked VideoB</item>
+        <item>PhotoB</item>
+    </string-array>
+
+    <string name="multi_select">Multi Selection</string>
+    <string name="open">Open</string>
+    <string name="play">Play</string>
+    <string name="lock">Lock</string>
+    <string name="unlock">Unlock</string>
+    <string name="delete">Delete</string>
 </resources>

@@ -42,6 +42,14 @@ public class MediaSaver {
     // for media save
     private ContentResolver mResolver = null;
 
+    private static MediaSaver mInstance = null;
+    public static MediaSaver getInstance(Context context) {
+        if (mInstance == null) {
+            mInstance = new MediaSaver(context);
+        }
+        return mInstance;
+    }
+
     public MediaSaver(Context context) {
         mResolver = context.getContentResolver();
     }
@@ -57,21 +65,25 @@ public class MediaSaver {
         new ImageDelTask(path, mResolver).execute();
     }
 
-    public void addVideo(String path, int w, int h, boolean impact) {
-        new VideoSaveTask(path, w, h, impact, mResolver).execute();
+    public void addVideo(String path, long date, int w, int h, long duration, boolean impact) {
+        new VideoSaveTask(path, date, w, h, duration, impact, mResolver).execute();
     }
 
     public void delVideo(String path) {
         new VideoDelTask(path, mResolver).execute();
     }
 
+    public void setVideoLockType(String path, boolean lock) {
+        new VideoSetLockTask(path, lock, mResolver).execute();
+    }
+
     private class ImageSaveTask extends AsyncTask <Void, Void, Uri> {
-        private final String path;
-        private final long date;
-        private final Location loc;
+        private String path;
+        private long date;
+        private Location loc;
         private int width, height;
-        private final int orientation;
-        private final ContentResolver resolver;
+        private int orientation;
+        private ContentResolver resolver;
 
         public ImageSaveTask(String path, long date, Location loc, int width, int height,
                              int orientation, ContentResolver resolver) {
@@ -134,7 +146,7 @@ public class MediaSaver {
 
     private class ImageDelTask extends AsyncTask <Void, Void, Uri> {
         private String path;
-        private final ContentResolver resolver;
+        private ContentResolver resolver;
 
         public ImageDelTask(String path, ContentResolver r) {
             this.path     = path;
@@ -156,15 +168,19 @@ public class MediaSaver {
 
     private class VideoSaveTask extends AsyncTask <Void, Void, Uri> {
         private String  path;
+        private long    date;
         private int     width;
         private int     height;
+        private long    duration;
         private boolean impact;
-        private final ContentResolver resolver;
+        private ContentResolver resolver;
 
-        public VideoSaveTask(String path, int w, int h, boolean impact, ContentResolver r) {
+        public VideoSaveTask(String path, long date, int w, int h, long duration, boolean impact, ContentResolver r) {
             this.path     = path;
+            this.date     = date;
             this.width    = w;
             this.height   = h;
+            this.duration = duration;
             this.impact   = impact;
             this.resolver = r;
         }
@@ -186,6 +202,10 @@ public class MediaSaver {
                 values = new ContentValues();
                 values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4");
                 values.put(MediaStore.Video.Media.DATA, path);
+                values.put(MediaStore.Video.Media.DATE_TAKEN, date);
+                values.put(MediaStore.Video.Media.WIDTH, width);
+                values.put(MediaStore.Video.Media.HEIGHT, height);
+                values.put(MediaStore.Video.Media.DURATION, duration);
                 uri = resolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
                 resolver.update(uri, values, null, null);
             } catch (Exception e) {
@@ -207,7 +227,7 @@ public class MediaSaver {
 
     private class VideoDelTask extends AsyncTask <Void, Void, Uri> {
         private String path;
-        private final ContentResolver resolver;
+        private ContentResolver resolver;
 
         public VideoDelTask(String path, ContentResolver r) {
             this.path     = path;
@@ -218,6 +238,40 @@ public class MediaSaver {
         protected Uri doInBackground(Void... v) {
             String params[] = new String[] { this.path };
             this.resolver.delete(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, MediaStore.Video.Media.DATA + " LIKE ?", params);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Uri uri) {
+            // todo...
+        }
+    }
+
+    private class VideoSetLockTask extends AsyncTask <Void, Void, Uri> {
+        private String  path;
+        private boolean lock;
+        private ContentResolver resolver;
+
+        public VideoSetLockTask(String path, boolean lock, ContentResolver r) {
+            this.path     = path;
+            this.lock     = lock;
+            this.resolver = r;
+        }
+
+        @Override
+        protected Uri doInBackground(Void... v) {
+            if (this.lock == this.path.startsWith(SdcardManager.DIRECTORY_IMPACT)) return null;
+
+            String newpath;
+            if (this.lock) {
+                newpath = this.path.replace(SdcardManager.DIRECTORY_VIDEO, SdcardManager.DIRECTORY_IMPACT);
+            } else {
+                newpath = this.path.replace(SdcardManager.DIRECTORY_IMPACT, SdcardManager.DIRECTORY_VIDEO);
+            }
+            String params[] = new String[] { this.path };
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Video.Media.DATA, newpath);
+            this.resolver.update(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values, MediaStore.Video.Media.DATA + " LIKE ?", params);
             return null;
         }
 
