@@ -129,7 +129,6 @@ public class ffRecorder {
 
     public void startRecording(int encidx, String filename) {
         if (encidx == -1) return;
-        stopRecording(encidx); // stop first
         try {
             if (mRecordEn [encidx] == false) {
                 mRecCamIdx[encidx].unlock();
@@ -142,7 +141,20 @@ public class ffRecorder {
                 mRecorders[encidx].start();
                 mRecordEn [encidx] = true;
             } else {
-                mRecorders[encidx].setOutputFile(filename);
+                if (true) {
+                    mRecorders[encidx].stop();
+                    mRecCamIdx[encidx].lock();
+                    mRecCamIdx[encidx].unlock();
+                    mRecorders[encidx].setCamera(mRecCamIdx[encidx]);
+                    mRecorders[encidx].setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
+                    mRecorders[encidx].setVideoSource(MediaRecorder.VideoSource.CAMERA);
+                    mRecorders[encidx].setProfile(mProfiles[encidx]);
+                    mRecorders[encidx].setOutputFile(filename);
+                    mRecorders[encidx].prepare();
+                    mRecorders[encidx].start();
+                } else {
+                    mRecorders[encidx].setOutputFile(filename);
+                }
             }
         } catch (Exception e) { e.printStackTrace(); }
     }
