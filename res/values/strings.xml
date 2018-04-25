@@ -4,6 +4,7 @@
     <string name="settings">settings</string>
 
     <string name="video_quality">video quality</string>
+    <string name="video_quality_480p">480P</string>
     <string name="video_quality_720p">720P</string>
     <string name="video_quality_1080p">1080P</string>
     <string name="video_duration">video duration</string>
