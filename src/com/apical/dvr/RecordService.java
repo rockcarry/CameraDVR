@@ -69,11 +69,11 @@ public class RecordService extends Service
         int cam_main_h = quality == 0 ? 480 : 720 ;
         mRecorder.init(cam_main_w, cam_main_h, 0, 0);
 
-        // encoder0 (1080p encoder), audio source is mic, video source is main camera
+        // encoder0 (720p encoder), audio source is mic, video source is main camera
         mRecorder.setAudioSource(0, 0);
         mRecorder.setVideoSource(0, 0);
 
-        // encoder1 (720p encoder ), audio source is mic, video source is main camera
+        // encoder1 (480p encoder), audio source is mic, video source is main camera
         mRecorder.setAudioSource(1, 0);
         mRecorder.setVideoSource(1, 0);
 
@@ -289,8 +289,8 @@ public class RecordService extends Service
         long stoptime = SystemClock.uptimeMillis();
         if (true) {
             int quality = Settings.get(Settings.KEY_VIDEO_QUALITY, Settings.DEF_VIDEO_QUALITY);
-            int w = quality == 0 ? 1280 : 1920;
-            int h = quality == 0 ? 720  : 1080;
+            int w = quality == 0 ? 640 : 1280;
+            int h = quality == 0 ? 480 : 720 ;
             mMediaSaver.addVideo(mRecordFileNameA, System.currentTimeMillis(), w, h, stoptime - mRecordStartTimeA, mImpactSaveFlag);
         }
         if (mMiscEventMon.isUsbCamConnected()) {
@@ -472,8 +472,8 @@ public class RecordService extends Service
 
                         long stoptime = SystemClock.uptimeMillis();
                         if (true) {
-                            int w = quality == 0 ? 1280 : 1920;
-                            int h = quality == 0 ? 720  : 1080;
+                            int w = quality == 0 ? 640 : 1280;
+                            int h = quality == 0 ? 480 : 720 ;
                             mMediaSaver.addVideo(mRecordFileNameA, System.currentTimeMillis(), w, h, stoptime - last_start_a, mImpactSaveFlag);
                         }
                         if (mMiscEventMon.isUsbCamConnected()) {
