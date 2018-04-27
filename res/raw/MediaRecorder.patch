@@ -1,0 +1,228 @@
+From 4a68bf9be8146d230ee48453a362c78a41383e2b Mon Sep 17 00:00:00 2001
+From: chenk <chenk@apical.com.cn>
+Date: Thu, 26 Apr 2018 18:17:58 +0800
+Subject: [PATCH] =?utf-8?q?=E4=BF=AE=E6=94=B9=20mediarecorder=20=E4=BB=A3=E7?=
+ =?utf-8?q?=A0=81=EF=BC=8C=E5=AE=9E=E7=8E=B0=E5=88=86=E6=AE=B5=E5=BD=95=E5=83?=
+ =?utf-8?q?=8F=E5=8A=9F=E8=83=BD?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../av/include/media/stagefright/MPEG4Writer.h     |    2 +-
+ frameworks/av/media/libmedia/mediarecorder.cpp     |    8 +--
+ .../libmediaplayerservice/StagefrightRecorder.cpp  |    7 +++
+ frameworks/av/media/libstagefright/MPEG4Writer.cpp |   55 ++++++++++++++++++--
+ .../media/java/android/media/MediaRecorder.java    |   14 ++++-
+ 5 files changed, 75 insertions(+), 11 deletions(-)
+ mode change 100644 => 100755 frameworks/av/include/media/stagefright/MPEG4Writer.h
+ mode change 100644 => 100755 frameworks/base/media/java/android/media/MediaRecorder.java
+
+diff --git a/frameworks/av/include/media/stagefright/MPEG4Writer.h b/frameworks/av/include/media/stagefright/MPEG4Writer.h
+old mode 100644
+new mode 100755
+index 26ce5f9..ad09b8d
+--- a/frameworks/av/include/media/stagefright/MPEG4Writer.h
++++ b/frameworks/av/include/media/stagefright/MPEG4Writer.h
+@@ -198,7 +198,7 @@ private:
+     void writeLongitude(int degreex10000);
+     void sendSessionSummary();
+     void release();
+-    status_t reset();
++    status_t reset(int flag = 0);
+ 
+     static uint32_t getMpeg4Time();
+ 
+diff --git a/frameworks/av/media/libmedia/mediarecorder.cpp b/frameworks/av/media/libmedia/mediarecorder.cpp
+index 1952b86..340125b 100644
+--- a/frameworks/av/media/libmedia/mediarecorder.cpp
++++ b/frameworks/av/media/libmedia/mediarecorder.cpp
+@@ -298,12 +298,12 @@ status_t MediaRecorder::setOutputFile(int fd, int64_t offset, int64_t length)
+         return INVALID_OPERATION;
+     }
+     if (mIsOutputFileSet) {
+-        ALOGE("output file has already been set");
+-        return INVALID_OPERATION;
++//      ALOGE("output file has already been set");
++//      return INVALID_OPERATION;
+     }
+     if (!(mCurrentState & MEDIA_RECORDER_DATASOURCE_CONFIGURED)) {
+-        ALOGE("setOutputFile called in an invalid state(%d)", mCurrentState);
+-        return INVALID_OPERATION;
++//      ALOGE("setOutputFile called in an invalid state(%d)", mCurrentState);
++//      return INVALID_OPERATION;
+     }
+ 
+     // It appears that if an invalid file descriptor is passed through
+diff --git a/frameworks/av/media/libmediaplayerservice/StagefrightRecorder.cpp b/frameworks/av/media/libmediaplayerservice/StagefrightRecorder.cpp
+index 3ec401b..14be546 100755
+--- a/frameworks/av/media/libmediaplayerservice/StagefrightRecorder.cpp
++++ b/frameworks/av/media/libmediaplayerservice/StagefrightRecorder.cpp
+@@ -265,6 +265,13 @@ status_t StagefrightRecorder::setOutputFile(int fd, int64_t offset, int64_t leng
+     }
+     mOutputFd = dup(fd);
+ 
++    if (mWriter != NULL) {
++        sp<MetaData> meta = new MetaData;
++        setupMPEG4orWEBMMetaData(&meta);
++        meta->setInt64('opfd', mOutputFd);
++        return mWriter->start(meta.get());
++    }
++
+     return OK;
+ }
+ 
+diff --git a/frameworks/av/media/libstagefright/MPEG4Writer.cpp b/frameworks/av/media/libstagefright/MPEG4Writer.cpp
+index 3339b7b..b59ee66 100755
+--- a/frameworks/av/media/libstagefright/MPEG4Writer.cpp
++++ b/frameworks/av/media/libstagefright/MPEG4Writer.cpp
+@@ -98,8 +98,9 @@ public:
+     ~Track();
+ 
+     status_t start(MetaData *params);
+-    status_t stop();
++    status_t stop(int flag = 0);
+     status_t pause();
++    status_t reset();
+     bool reachedEOS();
+ 
+     int64_t getDurationUs() const;
+@@ -600,6 +601,18 @@ status_t MPEG4Writer::start(MetaData *param) {
+         return UNKNOWN_ERROR;
+     }
+ 
++    int64_t opfd = -1;
++    if (param->findInt64('opfd', &opfd) && opfd != -1) {
++        reset(1);
++        mFd        = dup(opfd);
++        mInitCheck = OK;
++        mPaused    = false;
++        mStarted   = false;
++        mOffset    = 0;
++        param->setInt64('opfd', -1);
++        return start(param);
++    }
++
+     /*
+      * Check mMaxFileSizeLimitBytes at the beginning
+      * since mMaxFileSizeLimitBytes may be implicitly
+@@ -854,7 +867,7 @@ void MPEG4Writer::release() {
+     mStarted = false;
+ }
+ 
+-status_t MPEG4Writer::reset() {
++status_t MPEG4Writer::reset(int flag) {
+     if (mInitCheck != OK) {
+         return OK;
+     } else {
+@@ -873,7 +886,7 @@ status_t MPEG4Writer::reset() {
+     int64_t minDurationUs = 0x7fffffffffffffffLL;
+     for (List<Track *>::iterator it = mTracks.begin();
+          it != mTracks.end(); ++it) {
+-        status_t status = (*it)->stop();
++        status_t status = (*it)->stop(flag);
+         if (err == OK && status != OK) {
+             err = status;
+         }
+@@ -957,6 +970,15 @@ status_t MPEG4Writer::reset() {
+     CHECK(mBoxes.empty());
+ 
+     release();
++
++    //++ reset tracks
++    if (flag) {
++        for (List<Track *>::iterator it = mTracks.begin(); it != mTracks.end(); ++it) {
++            (*it)->reset();
++        }
++    }
++    //-- reset tracks
++
+     return err;
+ }
+ 
+@@ -1530,6 +1552,27 @@ void MPEG4Writer::Track::getCodecSpecificDataFromInputFormatIfPossible() {
+     }
+ }
+ 
++status_t MPEG4Writer::Track::reset() {
++    mSamplesHaveSameSize = true;
++
++    delete mStszTableEntries;
++    delete mStcoTableEntries;
++    delete mCo64TableEntries;
++    delete mStscTableEntries;
++    delete mSttsTableEntries;
++    delete mStssTableEntries;
++    delete mCttsTableEntries;
++    mStszTableEntries = new ListTableEntries<uint32_t>(1000, 1);
++    mStcoTableEntries = new ListTableEntries<uint32_t>(1000, 1);
++    mCo64TableEntries = new ListTableEntries<off64_t >(1000, 1);
++    mStscTableEntries = new ListTableEntries<uint32_t>(1000, 3);
++    mStssTableEntries = new ListTableEntries<uint32_t>(1000, 1);
++    mSttsTableEntries = new ListTableEntries<uint32_t>(1000, 2);
++    mCttsTableEntries = new ListTableEntries<uint32_t>(1000, 2);
++
++    return OK;
++}
++
+ MPEG4Writer::Track::~Track() {
+     stop();
+ 
+@@ -1807,7 +1850,7 @@ status_t MPEG4Writer::Track::pause() {
+     return OK;
+ }
+ 
+-status_t MPEG4Writer::Track::stop() {
++status_t MPEG4Writer::Track::stop(int flag) {
+     ALOGD("%s track stopping", mIsAudio? "Audio": "Video");
+     if (!mStarted) {
+         ALOGE("Stop() called but track is not started");
+@@ -1820,7 +1863,9 @@ status_t MPEG4Writer::Track::stop() {
+     mDone = true;
+ 
+     ALOGD("%s track source stopping", mIsAudio? "Audio": "Video");
+-    mSource->stop();
++    if (!flag) {
++        mSource->stop();
++    }
+     ALOGD("%s track source stopped", mIsAudio? "Audio": "Video");
+ 
+     void *dummy;
+diff --git a/frameworks/base/media/java/android/media/MediaRecorder.java b/frameworks/base/media/java/android/media/MediaRecorder.java
+old mode 100644
+new mode 100755
+index 81d5afe..b9d4858
+--- a/frameworks/base/media/java/android/media/MediaRecorder.java
++++ b/frameworks/base/media/java/android/media/MediaRecorder.java
+@@ -25,8 +25,8 @@ import android.util.Log;
+ import android.view.Surface;
+ 
+ import java.io.FileDescriptor;
+-import java.io.IOException;
+ import java.io.RandomAccessFile;
++import java.io.IOException;
+ import java.lang.ref.WeakReference;
+ 
+ /**
+@@ -714,6 +714,18 @@ public class MediaRecorder
+      */
+     public void setOutputFile(String path) throws IllegalStateException
+     {
++        if (mPath != null) {
++            RandomAccessFile fos = null;
++            try {
++                fos = new RandomAccessFile(path, "rws");
++                _setOutputFile(fos.getFD(), 0, 0);
++            } catch (IOException e) {
++                e.printStackTrace();
++            } finally {
++                try { fos.close(); } catch (Exception e) { e.printStackTrace(); }
++            }
++        }
++
+         mFd = null;
+         mPath = path;
+     }
+-- 
+1.7.9.5
+
