@@ -272,6 +272,7 @@ public class MediaSaver {
             ContentValues values = new ContentValues();
             values.put(MediaStore.Video.Media.DATA, newpath);
             this.resolver.update(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values, MediaStore.Video.Media.DATA + " LIKE ?", params);
+            (new File(this.path)).renameTo(new File(newpath));
             return null;
         }
 
