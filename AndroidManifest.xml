@@ -53,6 +53,7 @@
         </receiver>
 
         <service android:name=".RecordService" />
+        <service android:name=".DiskRecycler"  />
     </application>
 
 </manifest>
