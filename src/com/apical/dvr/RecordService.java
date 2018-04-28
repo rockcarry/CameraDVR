@@ -30,7 +30,7 @@ public class RecordService extends Service
     private RecordBinder     mBinder              = null;
     private ffRecorder       mRecorder            = null;
     private boolean          mRecording           = false;
-    private MediaSaver       mMediaSaver          = null;
+    private MediaManager     mMediaManager        = null;
     private String           mCurVideoFile        = null;
     private GSensorMonitor   mGSensorMon          = null;
     private LocationMonitor  mLocationMon         = null;
@@ -59,10 +59,10 @@ public class RecordService extends Service
         mCamSwitchState = Settings.get(Settings.KEY_CAMERA_SWITCH_STATE_VALUE, Settings.DEF_CAMERA_SWITCH_STATE_VALUE);
         mRecordDuration = Settings.get(Settings.KEY_RECORD_DURATION          , Settings.DEF_RECORD_DURATION          );
 
-        mBinder     = new RecordBinder();
-        mMediaSaver = new MediaSaver(this);
-        mMediaSaver = MediaSaver.getInstance(this);
-        mRecorder   = ffRecorder.getInstance(this);
+        mBinder        = new RecordBinder();
+        mMediaManager  = new MediaManager(this);
+        mMediaManager  = MediaManager.getInstance(this);
+        mRecorder      = ffRecorder.getInstance(this);
 
         int quality    = Settings.get(Settings.KEY_VIDEO_QUALITY, Settings.DEF_VIDEO_QUALITY);
         int cam_main_w = quality == 0 ? 1280 : 1920;
@@ -104,7 +104,7 @@ public class RecordService extends Service
         mLocationMon.recordLocation(true);
 
         // sdcard manager
-        mSdManager = new SdcardManager(this, mMediaSaver, new SdcardManager.SdStateChangeListener() {
+        mSdManager = new SdcardManager(this, new SdcardManager.SdStateChangeListener() {
             @Override
             public void onSdStateChanged(boolean insert) {
                 if (insert) {
@@ -291,10 +291,10 @@ public class RecordService extends Service
             int quality = Settings.get(Settings.KEY_VIDEO_QUALITY, Settings.DEF_VIDEO_QUALITY);
             int w = quality == 0 ? 1280 : 1920;
             int h = quality == 0 ? 720  : 1080;
-            mMediaSaver.addVideo(mRecordFileNameA, System.currentTimeMillis(), w, h, stoptime - mRecordStartTimeA, mImpactSaveFlag);
+            mMediaManager.addVideo(mRecordFileNameA, System.currentTimeMillis(), w, h, stoptime - mRecordStartTimeA, mImpactSaveFlag);
         }
         if (mMiscEventMon.isUsbCamConnected()) {
-            mMediaSaver.addVideo(mRecordFileNameB, System.currentTimeMillis(), 640, 480, stoptime - mRecordStartTimeB, mImpactSaveFlag);
+            mMediaManager.addVideo(mRecordFileNameB, System.currentTimeMillis(), 640, 480, stoptime - mRecordStartTimeB, mImpactSaveFlag);
         }
 
         // update float window
@@ -369,7 +369,7 @@ public class RecordService extends Service
         mRecorder.takePhoto(type, getNewPhotoFileName(type), new ffRecorder.takePhotoCallback() {
             @Override
             public void onPhotoTaken(String filename, int width, int height) {
-                mMediaSaver.addImage(filename,
+                mMediaManager.addImage(filename,
                     System.currentTimeMillis(),
                     mLocationMon.getCurrentLocation(),
                     width, height, 0);
@@ -474,10 +474,10 @@ public class RecordService extends Service
                         if (true) {
                             int w = quality == 0 ? 1280 : 1920;
                             int h = quality == 0 ? 720  : 1080;
-                            mMediaSaver.addVideo(mRecordFileNameA, System.currentTimeMillis(), w, h, stoptime - last_start_a, mImpactSaveFlag);
+                            mMediaManager.addVideo(mRecordFileNameA, System.currentTimeMillis(), w, h, stoptime - last_start_a, mImpactSaveFlag);
                         }
                         if (mMiscEventMon.isUsbCamConnected()) {
-                            mMediaSaver.addVideo(mRecordFileNameB, System.currentTimeMillis(), 640, 480, stoptime - last_start_b, mImpactSaveFlag);
+                            mMediaManager.addVideo(mRecordFileNameB, System.currentTimeMillis(), 640, 480, stoptime - last_start_b, mImpactSaveFlag);
                         }
 
                         mRecordFileNameA = newNameA;
