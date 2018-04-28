@@ -34,23 +34,23 @@ import java.io.FileOutputStream;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A class implementing {@link com.android.camera.app.MediaSaver}.
+ * A class implementing {@link com.android.camera.app.MediaManager}.
  */
-public class MediaSaver {
-    private static final String TAG = "MediaSaver";
+public class MediaManager {
+    private static final String TAG = "MediaManager";
 
     // for media save
     private ContentResolver mResolver = null;
 
-    private static MediaSaver mInstance = null;
-    public static MediaSaver getInstance(Context context) {
+    private static MediaManager mInstance = null;
+    public static MediaManager getInstance(Context context) {
         if (mInstance == null) {
-            mInstance = new MediaSaver(context);
+            mInstance = new MediaManager(context);
         }
         return mInstance;
     }
 
-    public MediaSaver(Context context) {
+    public MediaManager(Context context) {
         mResolver = context.getContentResolver();
     }
 
