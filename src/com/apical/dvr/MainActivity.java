@@ -184,7 +184,9 @@ public class MainActivity extends Activity
             startRecording(!mRecServ.isRecording());
             break;
         case R.id.btn_recmic_mute_switcher:
-            setRecMicMute(!mRecServ.getRecMicMute());
+            if (!mRecServ.isRecording()) {
+                setRecMicMute(!mRecServ.getRecMicMute());
+            }
             break;
         case R.id.btn_dvr_camera_switcher:
             switchCamera();

@@ -133,7 +133,7 @@ public class ffRecorder {
             if (mRecordEn [encidx] == false) {
                 mRecCamIdx[encidx].unlock();
                 mRecorders[encidx].setCamera(mRecCamIdx[encidx]);
-                mRecorders[encidx].setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
+                mRecorders[encidx].setAudioSource(mMicMute ? MediaRecorder.AudioSource.REMOTE_SUBMIX : MediaRecorder.AudioSource.MIC);
                 mRecorders[encidx].setVideoSource(MediaRecorder.VideoSource.CAMERA);
                 mRecorders[encidx].setProfile(mProfiles[encidx]);
                 mRecorders[encidx].setOutputFile(filename);
@@ -146,7 +146,7 @@ public class ffRecorder {
                     mRecCamIdx[encidx].lock();
                     mRecCamIdx[encidx].unlock();
                     mRecorders[encidx].setCamera(mRecCamIdx[encidx]);
-                    mRecorders[encidx].setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
+                    mRecorders[encidx].setAudioSource(mMicMute ? MediaRecorder.AudioSource.REMOTE_SUBMIX : MediaRecorder.AudioSource.MIC);
                     mRecorders[encidx].setVideoSource(MediaRecorder.VideoSource.CAMERA);
                     mRecorders[encidx].setProfile(mProfiles[encidx]);
                     mRecorders[encidx].setOutputFile(filename);
