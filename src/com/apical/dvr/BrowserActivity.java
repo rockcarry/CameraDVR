@@ -35,6 +35,7 @@ import java.util.ArrayList;
 public class BrowserActivity extends TabActivity
 {
     private static final String TAG = "BrowserActivity";
+    public  static final int MSG_UPDATE_VIEW_LIST = 0;
 
     private ListView mListViewNormalVideoA;
     private ListView mListViewLockedVideoA;
@@ -80,12 +81,12 @@ public class BrowserActivity extends TabActivity
             tw.getChildAt(i).getLayoutParams().height = 50;
         }
 
-        mAdapterNormalVideoA  = new MediaListAdapter(this, SdcardManager.DIRECTORY_VIDEO  + "/A_VID_");
-        mAdapterLockedVideoA  = new MediaListAdapter(this, SdcardManager.DIRECTORY_IMPACT + "/A_VID_");
-        mAdapterPhotoA        = new MediaListAdapter(this, SdcardManager.DIRECTORY_PHOTO  + "/A_IMG_");
-        mAdapterNormalVideoB  = new MediaListAdapter(this, SdcardManager.DIRECTORY_VIDEO  + "/B_VID_");
-        mAdapterLockedVideoB  = new MediaListAdapter(this, SdcardManager.DIRECTORY_IMPACT + "/B_VID_");
-        mAdapterPhotoB        = new MediaListAdapter(this, SdcardManager.DIRECTORY_PHOTO  + "/B_IMG_");
+        mAdapterNormalVideoA  = new MediaListAdapter(this, mHandler, SdcardManager.DIRECTORY_VIDEO  + "/A_VID_");
+        mAdapterLockedVideoA  = new MediaListAdapter(this, mHandler, SdcardManager.DIRECTORY_IMPACT + "/A_VID_");
+        mAdapterPhotoA        = new MediaListAdapter(this, mHandler, SdcardManager.DIRECTORY_PHOTO  + "/A_IMG_");
+        mAdapterNormalVideoB  = new MediaListAdapter(this, mHandler, SdcardManager.DIRECTORY_VIDEO  + "/B_VID_");
+        mAdapterLockedVideoB  = new MediaListAdapter(this, mHandler, SdcardManager.DIRECTORY_IMPACT + "/B_VID_");
+        mAdapterPhotoB        = new MediaListAdapter(this, mHandler, SdcardManager.DIRECTORY_PHOTO  + "/B_IMG_");
 
         mListViewNormalVideoA = (ListView) findViewById(R.id.lv_normal_video_a);
         mListViewLockedVideoA = (ListView) findViewById(R.id.lv_locked_video_a);
@@ -142,7 +143,24 @@ public class BrowserActivity extends TabActivity
         super.onPause();
     }
 
-    private Handler mHandler = new Handler();
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+            case MSG_UPDATE_VIEW_LIST:
+                switch (msg.arg1) {
+                case 0: mAdapterNormalVideoA.notifyDataSetChanged(); break;
+                case 1: mAdapterLockedVideoA.notifyDataSetChanged(); break;
+                case 2: mAdapterPhotoA.notifyDataSetChanged();       break;
+                case 3: mAdapterNormalVideoB.notifyDataSetChanged(); break;
+                case 4: mAdapterLockedVideoB.notifyDataSetChanged(); break;
+                case 5: mAdapterPhotoB.notifyDataSetChanged();       break;
+                }
+                break;
+            }
+        }
+    };
+
     private ContentObserver mVideoObserver = new ContentObserver(mHandler) {
         @Override
         public void onChange(boolean selfChange) {
@@ -170,20 +188,80 @@ public class BrowserActivity extends TabActivity
 
 class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener {
     private Context             mContext;
+    private Handler             mHandler;
     private ContentResolver     mResolver;
-    private List<MediaListItem> mMediaList;
+    private List<MediaListItem> mMediaListOld = new ArrayList();
+    private List<MediaListItem> mMediaListNew = new ArrayList();
     private String              mMediaPath;
     private boolean             mIsPhoto;
 
-    public MediaListAdapter(Context context, String path) {
+    public MediaListAdapter(Context context, Handler handler, String path) {
         mContext     = context;
+        mHandler     = handler;
         mResolver    = mContext.getContentResolver();
-        mMediaList   = new ArrayList();
         mMediaPath   = path;
         mIsPhoto     = path.startsWith(SdcardManager.DIRECTORY_PHOTO);
     }
 
+    private Thread  mLoadThread     = null;
+    private boolean mExitLoadThread = false;
+    private void doLoadBitmaps() {
+        // copy bitmap which already loaded from old list to new list
+        for (MediaListItem ni : mMediaListNew) {
+            for (MediaListItem oi : mMediaListOld) {
+                if (ni.fl_thumb == oi.fl_thumb && oi.fl_bitmap != null) {
+                    ni.fl_bitmap = oi.fl_bitmap;
+                    break;
+                }
+            }
+        }
+
+        // clear old list to release memory
+        mMediaListOld.clear();
+
+        // load bitmaps which did not loaded
+        for (MediaListItem ni : mMediaListNew) {
+            if (mExitLoadThread) break;
+            if (ni.fl_bitmap == null) {
+                ni.fl_bitmap = mIsPhoto ?
+                      MediaStore.Images.Thumbnails.getThumbnail(mResolver, ni.fl_thumb, MediaStore.Images.Thumbnails.MINI_KIND, null)
+                    : MediaStore.Video .Thumbnails.getThumbnail(mResolver, ni.fl_thumb, MediaStore.Images.Thumbnails.MINI_KIND, null);
+            }
+        }
+
+        Message msg = new Message();
+        msg.what = BrowserActivity.MSG_UPDATE_VIEW_LIST;
+        if (mMediaPath.startsWith(SdcardManager.DIRECTORY_VIDEO  + "/A_VID_")) {
+            msg.what = 0;
+        } else if (mMediaPath.startsWith(SdcardManager.DIRECTORY_IMPACT + "/A_VID_")) {
+            msg.what = 1;
+        } else if (mMediaPath.startsWith(SdcardManager.DIRECTORY_PHOTO  + "/A_IMG_")) {
+            msg.what = 2;
+        } else if (mMediaPath.startsWith(SdcardManager.DIRECTORY_VIDEO  + "/B_VID_")) {
+            msg.what = 3;
+        } else if (mMediaPath.startsWith(SdcardManager.DIRECTORY_IMPACT + "/B_VID_")) {
+            msg.what = 4;
+        } else if (mMediaPath.startsWith(SdcardManager.DIRECTORY_PHOTO  + "/B_IMG_")) {
+            msg.what = 5;
+        }
+        mHandler.sendMessage(msg);
+    }
+
+    class LoadBitmapsThread extends Thread {
+        @Override
+        public void run() {
+            mExitLoadThread = false;
+            doLoadBitmaps();
+            mLoadThread = null;
+        }
+    }
+
     public void reload() {
+        if (mLoadThread != null) {
+            mExitLoadThread = true;
+            try { mLoadThread.join(); } catch (Exception e) { e.printStackTrace(); }
+        }
+
         String[] vidmediacols = new String[] {
             MediaStore.Video.Media.DATA,
             MediaStore.Video.Media.TITLE,
@@ -202,7 +280,8 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
             MediaStore.Images.Media._ID,
         };
 
-        mMediaList.clear();
+        mMediaListOld = mMediaListNew;
+        mMediaListNew = new ArrayList();
         if (mIsPhoto) {
             Cursor cursor = mResolver.query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, imgmediacols,
                                             MediaStore.Images.Media.DATA + " like ? ",
@@ -217,7 +296,7 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
                     item.fl_detail2   = "";
                     item.fl_size      = formatFileSizeString(cursor.getInt(4));
                     item.fl_thumb     = cursor.getInt(5);
-                    mMediaList.add(item);
+                    mMediaListNew.add(item);
                 } while (cursor.moveToNext());
             }
             cursor.close();
@@ -235,11 +314,14 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
                     item.fl_detail2   = formatDurationString(cursor.getInt(4));
                     item.fl_size      = formatFileSizeString(cursor.getInt(5));
                     item.fl_thumb     = cursor.getInt(6);
-                    mMediaList.add(item);
+                    mMediaListNew.add(item);
                 } while (cursor.moveToNext());
             }
             cursor.close();
         }
+
+        mLoadThread = new LoadBitmapsThread();
+        mLoadThread.start();
     }
 
     @Override
@@ -262,14 +344,7 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
             holder = (ViewHolder) convertView.getTag();
         }
 
-        MediaListItem item = mMediaList.get(position);
-        if (item.fl_bitmap == null) {
-            if (mIsPhoto) {
-                item.fl_bitmap = MediaStore.Images.Thumbnails.getThumbnail(mResolver, item.fl_thumb, MediaStore.Images.Thumbnails.MINI_KIND, null);
-            } else {
-                item.fl_bitmap = MediaStore.Video .Thumbnails.getThumbnail(mResolver, item.fl_thumb, MediaStore.Images.Thumbnails.MINI_KIND, null);
-            }
-        }
+        MediaListItem item = mMediaListNew.get(position);
         holder.fi_image  .setImageBitmap(item.fl_bitmap);
         holder.fl_name   .setText(item.fl_name);
         holder.fl_detail1.setText(item.fl_detail1);
@@ -280,12 +355,12 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
 
     @Override
     public final int getCount() {
-        return mMediaList.size();
+        return mMediaListNew.size();
     }
 
     @Override
     public final Object getItem(int position) {
-        return mMediaList.get(position);
+        return mMediaListNew.get(position);
     }
 
     @Override
@@ -295,7 +370,7 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        MediaListItem item = mMediaList.get(position);
+        MediaListItem item = mMediaListNew.get(position);
         if (mIsPhoto) {
             openPhoto(mContext, item.fl_path, item.fl_name);
         } else {
@@ -326,7 +401,7 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
         builder.setItems(items, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                MediaListItem item = mMediaList.get(final_pos);
+                MediaListItem item = mMediaListNew.get(final_pos);
                 if (mIsPhoto) {
                     switch (which) {
                     case 0: openPhoto(mContext, item.fl_path, item.fl_name); break;
