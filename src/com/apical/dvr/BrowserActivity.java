@@ -250,8 +250,8 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
         // copy bitmap which already loaded from old list to new list
         for (MediaListItem ni : mMediaListNew) {
             for (MediaListItem oi : mMediaListOld) {
-                if (ni.fl_thumb == oi.fl_thumb && oi.fl_bitmap != null) {
-                    ni.fl_bitmap = oi.fl_bitmap;
+                if (ni.mi_thumb == oi.mi_thumb && oi.mi_bitmap != null) {
+                    ni.mi_bitmap = oi.mi_bitmap;
                     break;
                 }
             }
@@ -263,10 +263,10 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
         // load bitmaps which did not loaded
         for (MediaListItem ni : mMediaListNew) {
             if (mExitLoadThread) break;
-            if (ni.fl_bitmap == null) {
-                ni.fl_bitmap = mIsPhoto ?
-                      MediaStore.Images.Thumbnails.getThumbnail(mResolver, ni.fl_thumb, MediaStore.Images.Thumbnails.MINI_KIND, null)
-                    : MediaStore.Video .Thumbnails.getThumbnail(mResolver, ni.fl_thumb, MediaStore.Images.Thumbnails.MINI_KIND, null);
+            if (ni.mi_bitmap == null) {
+                ni.mi_bitmap = mIsPhoto ?
+                      MediaStore.Images.Thumbnails.getThumbnail(mResolver, ni.mi_thumb, MediaStore.Images.Thumbnails.MINI_KIND, null)
+                    : MediaStore.Video .Thumbnails.getThumbnail(mResolver, ni.mi_thumb, MediaStore.Images.Thumbnails.MINI_KIND, null);
             }
         }
 
@@ -331,12 +331,12 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
             if (cursor.moveToFirst()) {
                 do {
                     MediaListItem item= new MediaListItem();
-                    item.fl_path      = cursor.getString(0);
-                    item.fl_name      = cursor.getString(1);
-                    item.fl_detail1   = String.format("%10s", String.format("%dx%d", cursor.getInt(2), cursor.getInt(3)));
-                    item.fl_detail2   = "";
-                    item.fl_size      = formatFileSizeString(cursor.getInt(4));
-                    item.fl_thumb     = cursor.getInt(5);
+                    item.mi_path      = cursor.getString(0);
+                    item.mi_name      = cursor.getString(1);
+                    item.mi_detail1   = String.format("%10s", String.format("%dx%d", cursor.getInt(2), cursor.getInt(3)));
+                    item.mi_detail2   = "";
+                    item.mi_size      = formatFileSizeString(cursor.getInt(4));
+                    item.mi_thumb     = cursor.getInt(5);
                     mMediaListNew.add(item);
                 } while (cursor.moveToNext());
             }
@@ -349,12 +349,12 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
             if (cursor.moveToFirst()) {
                 do {
                     MediaListItem item= new MediaListItem();
-                    item.fl_path      = cursor.getString(0);
-                    item.fl_name      = cursor.getString(1);
-                    item.fl_detail1   = String.format("%5dp", cursor.getInt(3));
-                    item.fl_detail2   = formatDurationString(cursor.getInt(4));
-                    item.fl_size      = formatFileSizeString(cursor.getInt(5));
-                    item.fl_thumb     = cursor.getInt(6);
+                    item.mi_path      = cursor.getString(0);
+                    item.mi_name      = cursor.getString(1);
+                    item.mi_detail1   = String.format("%5dp", cursor.getInt(3));
+                    item.mi_detail2   = formatDurationString(cursor.getInt(4));
+                    item.mi_size      = formatFileSizeString(cursor.getInt(5));
+                    item.mi_thumb     = cursor.getInt(6);
                     mMediaListNew.add(item);
                 } while (cursor.moveToNext());
             }
@@ -371,26 +371,26 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
         if (convertView == null) {
             convertView = LayoutInflater.from(mContext).inflate(R.layout.file_item, null);
             holder = new ViewHolder();
-            holder.fi_image   = (ImageView) convertView.findViewById(R.id.fi_file_image  );
-            holder.fl_name    = (TextView ) convertView.findViewById(R.id.fi_file_name   );
-            holder.fl_detail1 = (TextView ) convertView.findViewById(R.id.fi_file_detail1);
-            holder.fl_detail2 = (TextView ) convertView.findViewById(R.id.fi_file_detail2);
-            holder.fl_size    = (TextView ) convertView.findViewById(R.id.fi_file_size   );
-            holder.fl_name   .setTypeface(Typeface.MONOSPACE, Typeface.NORMAL);
-            holder.fl_detail1.setTypeface(Typeface.MONOSPACE, Typeface.NORMAL);
-            holder.fl_detail2.setTypeface(Typeface.MONOSPACE, Typeface.NORMAL);
-            holder.fl_size   .setTypeface(Typeface.MONOSPACE, Typeface.NORMAL);
+            holder.mi_image   = (ImageView) convertView.findViewById(R.id.fi_file_image  );
+            holder.mi_name    = (TextView ) convertView.findViewById(R.id.fi_file_name   );
+            holder.mi_detail1 = (TextView ) convertView.findViewById(R.id.fi_file_detail1);
+            holder.mi_detail2 = (TextView ) convertView.findViewById(R.id.fi_file_detail2);
+            holder.mi_size    = (TextView ) convertView.findViewById(R.id.fi_file_size   );
+            holder.mi_name   .setTypeface(Typeface.MONOSPACE, Typeface.NORMAL);
+            holder.mi_detail1.setTypeface(Typeface.MONOSPACE, Typeface.NORMAL);
+            holder.mi_detail2.setTypeface(Typeface.MONOSPACE, Typeface.NORMAL);
+            holder.mi_size   .setTypeface(Typeface.MONOSPACE, Typeface.NORMAL);
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
 
         MediaListItem item = mMediaListNew.get(position);
-        holder.fi_image  .setImageBitmap(item.fl_bitmap);
-        holder.fl_name   .setText(item.fl_name);
-        holder.fl_detail1.setText(item.fl_detail1);
-        holder.fl_detail2.setText(item.fl_detail2);
-        holder.fl_size   .setText(item.fl_size);
+        holder.mi_image  .setImageBitmap(item.mi_bitmap);
+        holder.mi_name   .setText(item.mi_name);
+        holder.mi_detail1.setText(item.mi_detail1);
+        holder.mi_detail2.setText(item.mi_detail2);
+        holder.mi_size   .setText(item.mi_size);
         return convertView;
     }
 
@@ -413,9 +413,9 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         MediaListItem item = mMediaListNew.get(position);
         if (mIsPhoto) {
-            openPhoto(mContext, item.fl_path, item.fl_name);
+            openPhoto(mContext, item.mi_path, item.mi_name);
         } else {
-            playVideo(mContext, item.fl_path, item.fl_name);
+            playVideo(mContext, item.mi_path, item.mi_name);
         }
     }
 
@@ -445,15 +445,15 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
                 MediaListItem item = mMediaListNew.get(final_pos);
                 if (mIsPhoto) {
                     switch (which) {
-                    case 0: openPhoto(mContext, item.fl_path, item.fl_name); break;
-                    case 1: MediaManager.getInstance(mContext).delImage(item.fl_path); break;
+                    case 0: openPhoto(mContext, item.mi_path, item.mi_name); break;
+                    case 1: MediaManager.getInstance(mContext).delImage(item.mi_path); break;
                     case 2: mHandler.sendEmptyMessage(BrowserActivity.MSG_ENABLE_MULTI_SELECT); break;
                     }
                 } else {
                     switch (which) {
-                    case 0: playVideo(mContext, item.fl_path, item.fl_name); break;
-                    case 1: MediaManager.getInstance(mContext).setVideoLockType(item.fl_path, !final_lock); break;
-                    case 2: MediaManager.getInstance(mContext).delVideo(item.fl_path); break;
+                    case 0: playVideo(mContext, item.mi_path, item.mi_name); break;
+                    case 1: MediaManager.getInstance(mContext).setVideoLockType(item.mi_path, !final_lock); break;
+                    case 2: MediaManager.getInstance(mContext).delVideo(item.mi_path); break;
                     case 3: mHandler.sendEmptyMessage(BrowserActivity.MSG_ENABLE_MULTI_SELECT); break;
                     }
                 }
@@ -506,20 +506,21 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
     }
 
     class MediaListItem {
-        Bitmap  fl_bitmap;
-        int     fl_thumb;
-        String  fl_path;
-        String  fl_name;
-        String  fl_detail1;
-        String  fl_detail2;
-        String  fl_size;
+        boolean mi_selected;
+        Bitmap  mi_bitmap;
+        int     mi_thumb;
+        String  mi_path;
+        String  mi_name;
+        String  mi_detail1;
+        String  mi_detail2;
+        String  mi_size;
     }
 
     class ViewHolder {
-        ImageView  fi_image;
-        TextView   fl_name;
-        TextView   fl_detail1;
-        TextView   fl_detail2;
-        TextView   fl_size;
+        ImageView  mi_image;
+        TextView   mi_name;
+        TextView   mi_detail1;
+        TextView   mi_detail2;
+        TextView   mi_size;
     }
 }
