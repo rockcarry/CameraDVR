@@ -330,13 +330,13 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
                 if (mIsPhoto) {
                     switch (which) {
                     case 0: openPhoto(mContext, item.fl_path, item.fl_name); break;
-                    case 1: MediaSaver.getInstance(mContext).delImage(item.fl_path); break;
+                    case 1: MediaManager.getInstance(mContext).delImage(item.fl_path); break;
                     }
                 } else {
                     switch (which) {
                     case 0: playVideo(mContext, item.fl_path, item.fl_name); break;
-                    case 1: MediaSaver.getInstance(mContext).setVideoLockType(item.fl_path, !final_lock); break;
-                    case 2: MediaSaver.getInstance(mContext).delVideo(item.fl_path); break;
+                    case 1: MediaManager.getInstance(mContext).setVideoLockType(item.fl_path, !final_lock); break;
+                    case 2: MediaManager.getInstance(mContext).delVideo(item.fl_path); break;
                     }
                 }
             }

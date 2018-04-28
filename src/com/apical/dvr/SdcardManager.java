@@ -33,14 +33,12 @@ public class SdcardManager {
     public static final String DIRECTORY_IMPACT = DIRECTORY_DCIM + "/DVR_Impact";
 
     // disk recycle thread
-    private Context           mContext       = null;
-    private MediaSaver        mMediaSaver    = null;
+    private Context               mContext   = null;
     private SdStateChangeListener mListerner = null;
 
-    public SdcardManager(Context c, MediaSaver ms, SdStateChangeListener l) {
-        mContext    = c;
-        mMediaSaver = ms;
-        mListerner  = l;
+    public SdcardManager(Context c, SdStateChangeListener l) {
+        mContext   = c;
+        mListerner = l;
     }
 
     public interface SdStateChangeListener {
@@ -82,14 +80,10 @@ public class SdcardManager {
     }
 
     public static int getBlockSize() {
-        String state = Environment.getStorageState(new File(DVR_SD_ROOT));
-
-        if (TextUtils.equals(state, Environment.MEDIA_MOUNTED)) {
+        if (isSdcardInsert()) {
             try {
                 StatFs stat = new StatFs(DVR_SD_ROOT);
-                if (state != null) {
-                    return stat.getBlockSize();
-                }
+                return stat.getBlockSize();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -98,35 +92,25 @@ public class SdcardManager {
     }
 
     public static long getTotalSpace() {
-        String state = Environment.getStorageState(new File(DVR_SD_ROOT));
-        if (!Environment.MEDIA_MOUNTED.equals(state)) {
-            return -1;
-        }
-        if (Environment.MEDIA_CHECKING.equals(state)) {
-            return -1;
-        }
-        try {
-            StatFs stat = new StatFs(DIRECTORY_DCIM);
-            return stat.getBlockCount() * (long) stat.getBlockSize();
-        } catch (Exception e) {
-            Log.i(TAG, "Fail to access external storage", e);
+        if (isSdcardInsert()) {
+            try {
+                StatFs stat = new StatFs(DIRECTORY_DCIM);
+                return stat.getBlockCount() * (long) stat.getBlockSize();
+            } catch (Exception e) {
+                Log.i(TAG, "Fail to access external storage", e);
+            }
         }
         return -1;
     }
 
     public static long getAvailableSpace() {
-        String state = Environment.getStorageState(new File(DVR_SD_ROOT));
-        if (!Environment.MEDIA_MOUNTED.equals(state)) {
-            return -1;
-        }
-        if (Environment.MEDIA_CHECKING.equals(state)) {
-            return -1;
-        }
-        try {
-            StatFs stat = new StatFs(DIRECTORY_DCIM);
-            return stat.getAvailableBlocks() * (long) stat.getBlockSize();
-        } catch (Exception e) {
-            Log.i(TAG, "Fail to access external storage", e);
+        if (isSdcardInsert()) {
+            try {
+                StatFs stat = new StatFs(DIRECTORY_DCIM);
+                return stat.getAvailableBlocks() * (long) stat.getBlockSize();
+            } catch (Exception e) {
+                Log.i(TAG, "Fail to access external storage", e);
+            }
         }
         return -1;
     }

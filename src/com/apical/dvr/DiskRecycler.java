@@ -22,7 +22,6 @@ import java.util.*;
 
 public class DiskRecycler extends Service {
     private static final String TAG = "DiskRecycler";
-
     private ServiceBinder mBinder = new ServiceBinder();
 
     @Override
@@ -86,47 +85,14 @@ public class DiskRecycler extends Service {
     //-- disk recycle --//
 }
 
-class DiskStorage {
-    private static final String TAG = "DiskStorage";
-
-    public static final int  DVR_PHOTO_KEEP_NUM  = 100;
-    public static final int  DVR_VIDEO_KEEP_NUM  = 10;
-    public static final int  DVR_IMPACT_KEEP_NUM = 10;
-    public static final long LOW_STORAGE_THRESHOLD_BYTES = 500*1024*1024l; // 500M
-
-    public static void makeCdrDirs() {
-        File dir_dcim   = new File(SdcardManager.DIRECTORY_DCIM  );
-        File dir_photo  = new File(SdcardManager.DIRECTORY_PHOTO );
-        File dir_video  = new File(SdcardManager.DIRECTORY_VIDEO );
-        File dir_impact = new File(SdcardManager.DIRECTORY_IMPACT);
-        if (!dir_dcim  .exists()) dir_dcim  .mkdirs();
-        if (!dir_photo .exists()) dir_photo .mkdirs();
-        if (!dir_video .exists()) dir_video .mkdirs();
-        if (!dir_impact.exists()) dir_impact.mkdirs();
-    }
-
-    public static long getAvailableSpace() {
-        String state = Environment.getStorageState(new File(SdcardManager.DVR_SD_ROOT));
-        if (!Environment.MEDIA_MOUNTED.equals(state)) {
-            return -1;
-        }
-        if (Environment.MEDIA_CHECKING.equals(state)) {
-            return -1;
-        }
-        try {
-            StatFs stat = new StatFs(SdcardManager.DIRECTORY_DCIM);
-            return stat.getAvailableBlocks() * (long) stat.getBlockSize();
-        } catch (Exception e) {
-            Log.i(TAG, "Fail to access external storage", e);
-        }
-        return -1;
-    }
-}
-
 class DiskRecycleThread extends Thread
 {
     private final static String TAG = "DiskRecycleThread";
     private final static int DISK_RECYCLE_PERIOD = 30 * 1000;
+    public static final int  DVR_PHOTO_KEEP_NUM  = 100;
+    public static final int  DVR_VIDEO_KEEP_NUM  = 10;
+    public static final int  DVR_IMPACT_KEEP_NUM = 10;
+    public static final long LOW_STORAGE_THRESHOLD_BYTES = 500*1024*1024l; // 500M
 
     private Context         mContext   = null;
     private ContentResolver mResolver  = null;
@@ -155,17 +121,17 @@ class DiskRecycleThread extends Thread
 
     @Override
     public void run() {
-        DiskStorage.makeCdrDirs(); // make cdr dirs
+        SdcardManager.makeDvrDirs(); // make dvr dirs
 
         while (!mStopCheck) {
-            long avail   = DiskStorage.getAvailableSpace();
-            long recycle = DiskStorage.LOW_STORAGE_THRESHOLD_BYTES - avail;
+            long avail   = SdcardManager.getAvailableSpace();
+            long recycle = LOW_STORAGE_THRESHOLD_BYTES - avail;
             Log.d(TAG, "===ck=== avail = " + avail + ", recycle = " + recycle);
 
             if (avail >= 0) {
-                recycle = recycleDirectorySpace(SdcardManager.DIRECTORY_VIDEO , recycle, DiskStorage.DVR_VIDEO_KEEP_NUM , 0);
-                recycle = recycleDirectorySpace(SdcardManager.DIRECTORY_IMPACT, recycle, DiskStorage.DVR_IMPACT_KEEP_NUM, 0);
-                recycle = recycleDirectorySpace(SdcardManager.DIRECTORY_PHOTO , recycle, DiskStorage.DVR_PHOTO_KEEP_NUM , 1);
+                recycle = recycleDirectorySpace(SdcardManager.DIRECTORY_VIDEO , recycle, DVR_VIDEO_KEEP_NUM , 0);
+                recycle = recycleDirectorySpace(SdcardManager.DIRECTORY_IMPACT, recycle, DVR_IMPACT_KEEP_NUM, 0);
+                recycle = recycleDirectorySpace(SdcardManager.DIRECTORY_PHOTO , recycle, DVR_PHOTO_KEEP_NUM , 1);
                 if (recycle > 0) {
                     Log.e(TAG, "===ck=== recycle disk space failed: " + recycle);
                 }
@@ -186,11 +152,19 @@ class DiskRecycleThread extends Thread
     }
 
     private void delImage(String path) {
-        new ImageDelTask(path, mResolver).execute();
+        String params[] = new String[] { path };
+        try {
+            mResolver.delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, MediaStore.Images.Media.DATA + " LIKE ?", params);
+        } catch (Exception e) { e.printStackTrace(); }
+        File f = new File(path); if (f.exists()) f.delete();
     }
 
     private void delVideo(String path) {
-        new VideoDelTask(path, mResolver).execute();
+        String params[] = new String[] { path };
+        try {
+            mResolver.delete(MediaStore.Video .Media.EXTERNAL_CONTENT_URI, MediaStore.Video .Media.DATA + " LIKE ?", params);
+        } catch (Exception e) { e.printStackTrace(); }
+        File f = new File(path); if (f.exists()) f.delete();
     }
 
     private long recycleDirectorySpace(String path, long recycle, int keep, int type) {
@@ -198,8 +172,7 @@ class DiskRecycleThread extends Thread
             File dir = new File(path);
             if (!dir.exists()) {
                 Log.e(TAG, "can't find " + path + " directory !");
-            }
-            else {
+            } else {
                 File[] files = dir.listFiles();
                 int    num   = files.length - keep;
                 if (num > 0) {
@@ -241,56 +214,6 @@ class DiskRecycleThread extends Thread
 
         if (source != null) {
             Arrays.sort(source, new FileComparator());
-        }
-    }
-
-    private class ImageDelTask extends AsyncTask <Void, Void, Uri> {
-        private String mPath;
-        private final ContentResolver mResolver;
-
-        public ImageDelTask(String path, ContentResolver r) {
-            mPath     = path;
-            mResolver = r;
-        }
-
-        @Override
-        protected Uri doInBackground(Void... v) {
-            String params[] = new String[] { mPath };
-            try {
-                mResolver.delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, MediaStore.Images.Media.DATA + " LIKE ?", params);
-            } catch (Exception e) { e.printStackTrace(); }
-            File f = new File(mPath); if (f.exists()) f.delete();
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Uri uri) {
-            // todo...
-        }
-    }
-
-    private class VideoDelTask extends AsyncTask <Void, Void, Uri> {
-        private String mPath;
-        private final ContentResolver mResolver;
-
-        public VideoDelTask(String path, ContentResolver r) {
-            mPath     = path;
-            mResolver = r;
-        }
-
-        @Override
-        protected Uri doInBackground(Void... v) {
-            String params[] = new String[] { mPath };
-            try {
-                mResolver.delete(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, MediaStore.Video.Media.DATA + " LIKE ?", params);
-            } catch (Exception e) { e.printStackTrace(); }
-            File f = new File(mPath); if (f.exists()) f.delete();
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Uri uri) {
-            // todo...
         }
     }
 }
