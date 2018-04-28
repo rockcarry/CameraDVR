@@ -22,7 +22,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TabHost;
 import android.widget.TabWidget;
@@ -32,10 +34,11 @@ import android.util.Log;
 import java.util.List;
 import java.util.ArrayList;
 
-public class BrowserActivity extends TabActivity
+public class BrowserActivity extends TabActivity implements View.OnClickListener
 {
     private static final String TAG = "BrowserActivity";
-    public  static final int MSG_UPDATE_VIEW_LIST = 0;
+    public  static final int MSG_UPDATE_VIEW_LIST    = 100;
+    public  static final int MSG_ENABLE_MULTI_SELECT = 101;
 
     private ListView mListViewNormalVideoA;
     private ListView mListViewLockedVideoA;
@@ -43,6 +46,12 @@ public class BrowserActivity extends TabActivity
     private ListView mListViewNormalVideoB;
     private ListView mListViewLockedVideoB;
     private ListView mListViewPhotoB;
+    private LinearLayout mLayoutMultiSelMenu;
+    private Button       mBtnSelectAll;
+    private Button       mBtnLock;
+    private Button       mBtnUnlock;
+    private Button       mBtnDelete;
+    private Button       mBtnCancel;
     private MediaListAdapter mAdapterNormalVideoA;
     private MediaListAdapter mAdapterLockedVideoA;
     private MediaListAdapter mAdapterPhotoA;
@@ -122,6 +131,18 @@ public class BrowserActivity extends TabActivity
         mAdapterLockedVideoB.reload();
         mAdapterPhotoB      .reload();
 
+        mLayoutMultiSelMenu   = (LinearLayout) findViewById(R.id.layout_multisel_menu);
+        mBtnSelectAll         = (Button      ) findViewById(R.id.btn_select_all);
+        mBtnLock              = (Button      ) findViewById(R.id.btn_lock      );
+        mBtnUnlock            = (Button      ) findViewById(R.id.btn_unlock    );
+        mBtnDelete            = (Button      ) findViewById(R.id.btn_delete    );
+        mBtnCancel            = (Button      ) findViewById(R.id.btn_cancel    );
+        mBtnSelectAll.setOnClickListener(this);
+        mBtnLock     .setOnClickListener(this);
+        mBtnUnlock   .setOnClickListener(this);
+        mBtnDelete   .setOnClickListener(this);
+        mBtnCancel   .setOnClickListener(this);
+
         getContentResolver().registerContentObserver(MediaStore.Video .Media.EXTERNAL_CONTENT_URI, false, mVideoObserver);
         getContentResolver().registerContentObserver(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, false, mPhotoObserver);
     }
@@ -143,6 +164,23 @@ public class BrowserActivity extends TabActivity
         super.onPause();
     }
 
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+        case R.id.btn_select_all:
+            break;
+        case R.id.btn_lock:
+            break;
+        case R.id.btn_unlock:
+            break;
+        case R.id.btn_delete:
+            break;
+        case R.id.btn_cancel:
+            mLayoutMultiSelMenu.setVisibility(View.GONE);
+            break;
+        }
+    }
+
     private Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -156,6 +194,9 @@ public class BrowserActivity extends TabActivity
                 case 4: mAdapterLockedVideoB.notifyDataSetChanged(); break;
                 case 5: mAdapterPhotoB.notifyDataSetChanged();       break;
                 }
+                break;
+            case MSG_ENABLE_MULTI_SELECT:
+                mLayoutMultiSelMenu.setVisibility(View.VISIBLE);
                 break;
             }
         }
@@ -406,12 +447,14 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
                     switch (which) {
                     case 0: openPhoto(mContext, item.fl_path, item.fl_name); break;
                     case 1: MediaManager.getInstance(mContext).delImage(item.fl_path); break;
+                    case 2: mHandler.sendEmptyMessage(BrowserActivity.MSG_ENABLE_MULTI_SELECT); break;
                     }
                 } else {
                     switch (which) {
                     case 0: playVideo(mContext, item.fl_path, item.fl_name); break;
                     case 1: MediaManager.getInstance(mContext).setVideoLockType(item.fl_path, !final_lock); break;
                     case 2: MediaManager.getInstance(mContext).delVideo(item.fl_path); break;
+                    case 3: mHandler.sendEmptyMessage(BrowserActivity.MSG_ENABLE_MULTI_SELECT); break;
                     }
                 }
             }
