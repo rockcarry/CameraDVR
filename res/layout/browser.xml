@@ -82,6 +82,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
+        android:background="#000000"
         android:visibility="gone" >
         <Button
             android:id="@+id/btn_select_all"
