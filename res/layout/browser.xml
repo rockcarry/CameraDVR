@@ -19,19 +19,16 @@
         <LinearLayout android:id="@+id/tab_normal_video_a"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:gravity="center_horizontal"
             android:orientation="vertical">
             <ListView
                 android:id="@+id/lv_normal_video_a"
                 android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_centerVertical="true" >
+                android:layout_height="wrap_content" >
             </ListView>
         </LinearLayout>
         <LinearLayout android:id="@+id/tab_locked_video_a"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:gravity="center_horizontal"
             android:orientation="vertical">
             <ListView
                 android:id="@+id/lv_locked_video_a"
@@ -42,7 +39,6 @@
         <LinearLayout android:id="@+id/tab_photo_a"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:gravity="center_horizontal"
             android:orientation="vertical">
             <ListView
                 android:id="@+id/lv_photo_a"
@@ -53,7 +49,6 @@
         <LinearLayout android:id="@+id/tab_normal_video_b"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:gravity="center_horizontal"
             android:orientation="vertical">
             <ListView
                 android:id="@+id/lv_normal_video_b"
@@ -64,7 +59,6 @@
         <LinearLayout android:id="@+id/tab_locked_video_b"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:gravity="center_horizontal"
             android:orientation="vertical">
             <ListView
                 android:id="@+id/lv_locked_video_b"
@@ -75,7 +69,6 @@
         <LinearLayout android:id="@+id/tab_photo_b"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:gravity="center_horizontal"
             android:orientation="vertical">
             <ListView
                 android:id="@+id/lv_photo_b"
@@ -85,4 +78,46 @@
         </LinearLayout>
     </FrameLayout>
 
+    <LinearLayout android:id="@+id/layout_multisel_menu"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#000000"
+        android:visibility="gone" >
+        <Button
+            android:id="@+id/btn_select_all"
+            android:layout_width="fill_parent"
+            android:layout_height="55dp"
+            android:layout_weight="1"
+            android:text="@string/btn_select_all"
+            android:textSize="22dp" />
+        <Button
+            android:id="@+id/btn_lock"
+            android:layout_width="fill_parent"
+            android:layout_height="55dp"
+            android:layout_weight="1"
+            android:text="@string/btn_lock"
+            android:textSize="22dp" />
+        <Button
+            android:id="@+id/btn_unlock"
+            android:layout_width="fill_parent"
+            android:layout_height="55dp"
+            android:layout_weight="1"
+            android:text="@string/btn_unlock"
+            android:textSize="22dp" />
+        <Button
+            android:id="@+id/btn_delete"
+            android:layout_width="fill_parent"
+            android:layout_height="55dp"
+            android:layout_weight="1"
+            android:text="@string/btn_delete"
+            android:textSize="22dp" />
+        <Button
+            android:id="@+id/btn_cancel"
+            android:layout_width="fill_parent"
+            android:layout_height="55dp"
+            android:layout_weight="1"
+            android:text="@string/btn_cancel"
+            android:textSize="22dp" />
+    </LinearLayout>
 </TabHost>
