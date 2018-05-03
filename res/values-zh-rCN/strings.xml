@@ -64,4 +64,7 @@
     <string name="btn_unlock">解锁</string>
     <string name="btn_delete">删除</string>
     <string name="btn_cancel">取消</string>
+
+    <string name="notice">提示</string>
+    <string name="please_wait">请等待操作完成 ...</string>
 </resources>

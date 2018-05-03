@@ -1,6 +1,7 @@
 package com.apical.dvr;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.app.TabActivity;
 import android.content.Context;
 import android.content.ContentResolver;
@@ -39,6 +40,9 @@ public class BrowserActivity extends TabActivity implements View.OnClickListener
     private static final String TAG = "BrowserActivity";
     public  static final int MSG_UPDATE_VIEW_LIST    = 0;
     public  static final int MSG_ENABLE_MULTI_SELECT = 1;
+    public  static final int MSG_DELETE_IMAGES_DONE  = 2;
+    public  static final int MSG_DELETE_VIDEOS_DONE  = 3;
+    public  static final int MSG_SET_LOCK_TYPE_DONE  = 4;
 
     private ListView mListViewNormalVideoA;
     private ListView mListViewLockedVideoA;
@@ -58,6 +62,8 @@ public class BrowserActivity extends TabActivity implements View.OnClickListener
     private MediaListAdapter mAdapterNormalVideoB;
     private MediaListAdapter mAdapterLockedVideoB;
     private MediaListAdapter mAdapterPhotoB;
+    private ProgressDialog   mWaitingDlg;
+    private boolean          mMultiSelMode;
 
     /** Called when the activity is first created. */
     @Override
@@ -145,6 +151,13 @@ public class BrowserActivity extends TabActivity implements View.OnClickListener
 
         getContentResolver().registerContentObserver(MediaStore.Video .Media.EXTERNAL_CONTENT_URI, false, mVideoObserver);
         getContentResolver().registerContentObserver(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, false, mPhotoObserver);
+
+        mWaitingDlg = new ProgressDialog(this);
+        mWaitingDlg.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        mWaitingDlg.setCancelable(false);
+        mWaitingDlg.setCanceledOnTouchOutside(false);
+        mWaitingDlg.setTitle(getString(R.string.notice));
+        mWaitingDlg.setMessage(getString(R.string.please_wait));
     }
 
     @Override
@@ -165,6 +178,18 @@ public class BrowserActivity extends TabActivity implements View.OnClickListener
     }
 
     @Override
+    public void onBackPressed() {
+        MediaListAdapter adapter = getListViewAdpaterByIndex(getTabHost().getCurrentTab());
+        if (adapter.getMultiSelMode()) {
+            adapter.setMultiSelMode   (false);
+            adapter.setAllItemSelState(false);
+            mLayoutMultiSelMenu.setVisibility(View.INVISIBLE);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
     public void onClick(View v) {
         switch (v.getId()) {
         case R.id.btn_select_all: {
@@ -172,11 +197,43 @@ public class BrowserActivity extends TabActivity implements View.OnClickListener
                 if (adapter != null) adapter.setAllItemSelState(true);
             }
             break;
-        case R.id.btn_lock:
+        case R.id.btn_lock: {
+                mWaitingDlg.show();
+                MediaListAdapter adapter = getListViewAdpaterByIndex(getTabHost().getCurrentTab());
+                MediaManager.getInstance(this).setVideosLockType(adapter.getSelectedItemPaths(), true , mHandler);
+                adapter.setMultiSelMode   (false);
+                adapter.setAllItemSelState(false);
+                mLayoutMultiSelMenu.setVisibility(View.INVISIBLE);
+            }
             break;
-        case R.id.btn_unlock:
+        case R.id.btn_unlock: {
+                mWaitingDlg.show();
+                MediaListAdapter adapter = getListViewAdpaterByIndex(getTabHost().getCurrentTab());
+                MediaManager.getInstance(this).setVideosLockType(adapter.getSelectedItemPaths(), false, mHandler);
+                adapter.setMultiSelMode   (false);
+                adapter.setAllItemSelState(false);
+                mLayoutMultiSelMenu.setVisibility(View.INVISIBLE);
+            }
             break;
-        case R.id.btn_delete:
+        case R.id.btn_delete: {
+                mWaitingDlg.show();
+                MediaListAdapter adapter = getListViewAdpaterByIndex(getTabHost().getCurrentTab());
+                switch (getTabHost().getCurrentTab()) {
+                case 0:
+                case 1:
+                case 3:
+                case 4:
+                    MediaManager.getInstance(this).delVideos(adapter.getSelectedItemPaths(), mHandler);
+                    break;
+                case 2:
+                case 5:
+                    MediaManager.getInstance(this).delImages(adapter.getSelectedItemPaths(), mHandler);
+                    break;
+                }
+                adapter.setMultiSelMode   (false);
+                adapter.setAllItemSelState(false);
+                mLayoutMultiSelMenu.setVisibility(View.INVISIBLE);
+            }
             break;
         case R.id.btn_cancel: {
                 MediaListAdapter adapter = getListViewAdpaterByIndex(getTabHost().getCurrentTab());
@@ -184,7 +241,7 @@ public class BrowserActivity extends TabActivity implements View.OnClickListener
                     adapter.setMultiSelMode   (false);
                     adapter.setAllItemSelState(false);
                 }
-                mLayoutMultiSelMenu.setVisibility(View.GONE);
+                mLayoutMultiSelMenu.setVisibility(View.INVISIBLE);
             }
             break;
         }
@@ -202,8 +259,37 @@ public class BrowserActivity extends TabActivity implements View.OnClickListener
             case MSG_ENABLE_MULTI_SELECT: {
                     MediaListAdapter adapter = getListViewAdpaterByIndex(getTabHost().getCurrentTab());
                     if (adapter != null) adapter.setMultiSelMode(true);
+
+                    mBtnLock  .setVisibility(View.GONE);
+                    mBtnUnlock.setVisibility(View.GONE);
+                    mBtnDelete.setVisibility(View.GONE);
+                    switch (getTabHost().getCurrentTab()) {
+                    case 0:
+                    case 3:
+                        mBtnLock  .setVisibility(View.VISIBLE);
+                        mBtnDelete.setVisibility(View.VISIBLE);
+                        break;
+                    case 1:
+                    case 4:
+                        mBtnUnlock.setVisibility(View.VISIBLE);
+                        mBtnDelete.setVisibility(View.VISIBLE);
+                        break;
+                    case 2:
+                    case 5:
+                        mBtnDelete.setVisibility(View.VISIBLE);
+                        break;
+                    }
                     mLayoutMultiSelMenu.setVisibility(View.VISIBLE);
                 }
+                break;
+            case MSG_DELETE_IMAGES_DONE:
+                reloadAndRefreshImageListView();
+                mWaitingDlg.dismiss();
+                break;
+            case MSG_DELETE_VIDEOS_DONE:
+            case MSG_SET_LOCK_TYPE_DONE:
+                reloadAndRefreshVideoListView();
+                mWaitingDlg.dismiss();
                 break;
             }
         }
@@ -221,27 +307,37 @@ public class BrowserActivity extends TabActivity implements View.OnClickListener
         }
     }
 
+    private void reloadAndRefreshVideoListView() {
+        mAdapterNormalVideoA.reload();
+        mAdapterLockedVideoA.reload();
+        mAdapterNormalVideoB.reload();
+        mAdapterLockedVideoB.reload();
+        mAdapterNormalVideoA.notifyDataSetChanged();
+        mAdapterLockedVideoA.notifyDataSetChanged();
+        mAdapterNormalVideoB.notifyDataSetChanged();
+        mAdapterLockedVideoB.notifyDataSetChanged();
+    }
+
+    private void reloadAndRefreshImageListView() {
+        mAdapterPhotoA.reload();
+        mAdapterPhotoB.reload();
+        mAdapterPhotoA.notifyDataSetChanged();
+        mAdapterPhotoB.notifyDataSetChanged();
+    }
+
     private ContentObserver mVideoObserver = new ContentObserver(mHandler) {
         @Override
         public void onChange(boolean selfChange) {
-            mAdapterNormalVideoA.reload();
-            mAdapterLockedVideoA.reload();
-            mAdapterNormalVideoB.reload();
-            mAdapterLockedVideoB.reload();
-            mAdapterNormalVideoA.notifyDataSetChanged();
-            mAdapterLockedVideoA.notifyDataSetChanged();
-            mAdapterNormalVideoB.notifyDataSetChanged();
-            mAdapterLockedVideoB.notifyDataSetChanged();
+            if (mWaitingDlg.isShowing()) return;
+            reloadAndRefreshVideoListView();
         }
     };
 
     private ContentObserver mPhotoObserver = new ContentObserver(mHandler) {
         @Override
         public void onChange(boolean selfChange) {
-            mAdapterPhotoA.reload();
-            mAdapterPhotoB.reload();
-            mAdapterPhotoA.notifyDataSetChanged();
-            mAdapterPhotoB.notifyDataSetChanged();
+            if (mWaitingDlg.isShowing()) return;
+            reloadAndRefreshImageListView();
         }
     };
 }
@@ -254,7 +350,7 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
     private List<MediaListItem> mMediaListNew = new ArrayList();
     private String              mMediaPath;
     private boolean             mIsPhoto;
-    private boolean             mMultiSel;
+    private boolean             mMultiSelMode;
 
     public MediaListAdapter(Context context, Handler handler, String path) {
         mContext     = context;
@@ -389,8 +485,12 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
         mLoadThread.start();
     }
 
+    public boolean getMultiSelMode() {
+        return mMultiSelMode;
+    }
+
     public void setMultiSelMode(boolean mode) {
-        mMultiSel = mode;
+        mMultiSelMode = mode;
         updateViewList();
     }
 
@@ -399,6 +499,22 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
             ni.mi_selected = sel;
         }
         updateViewList();
+    }
+
+    public String[] getSelectedItemPaths() {
+        int num;
+        num = 0;
+        for (MediaListItem ni : mMediaListNew) {
+            if (ni.mi_selected) num++;
+        }
+        String[] paths = new String[num];
+        num = 0;
+        for (MediaListItem ni : mMediaListNew) {
+            if (ni.mi_selected) {
+                paths[num++] = ni.mi_path;
+            }
+        }
+        return paths;
     }
 
     @Override
@@ -454,7 +570,7 @@ class MediaListAdapter extends BaseAdapter implements AdapterView.OnItemClickLis
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         MediaListItem item = mMediaListNew.get(position);
-        if (mMultiSel) {
+        if (mMultiSelMode) {
             item.mi_selected = !item.mi_selected;
             updateViewList();
         } else {

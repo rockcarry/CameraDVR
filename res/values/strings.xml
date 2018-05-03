@@ -65,4 +65,7 @@
     <string name="btn_unlock">Unlock</string>
     <string name="btn_delete">Delete</string>
     <string name="btn_cancel">Cancel</string>
+
+    <string name="notice">Notice</string>
+    <string name="please_wait">Please wait ...</string>
 </resources>

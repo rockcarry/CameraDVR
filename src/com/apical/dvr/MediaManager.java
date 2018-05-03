@@ -23,6 +23,7 @@ import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Images;
 import android.provider.MediaStore.Images.ImageColumns;
@@ -55,45 +56,55 @@ public class MediaManager {
     }
 
     public void addImage(String path, long date, Location loc, int width, int height, int orientation) {
-        ImageSaveTask t = new ImageSaveTask(path, date,
-                (loc == null) ? null : new Location(loc),
-                width, height, orientation, mResolver);
-        t.execute();
-    }
-
-    public void delImage(String path) {
-        new ImageDelTask(path, mResolver).execute();
+        new ImageSaveTask(path, date, loc, width, height, orientation, mResolver).execute();
     }
 
     public void addVideo(String path, long date, int w, int h, long duration, boolean impact) {
         new VideoSaveTask(path, date, w, h, duration, impact, mResolver).execute();
     }
 
+    public void delImage(String path) {
+        delImages(new String[] { path }, null);
+    }
+
     public void delVideo(String path) {
-        new VideoDelTask(path, mResolver).execute();
+        delVideos(new String[] { path }, null);
     }
 
     public void setVideoLockType(String path, boolean lock) {
-        new VideoSetLockTask(path, lock, mResolver).execute();
+        setVideosLockType(new String[] { path }, lock, null);
+    }
+
+    public void delImages(String[] paths, Handler h) {
+        new ImagesDelTask(paths, mResolver, h).execute();
+    }
+
+    public void delVideos(String[] paths, Handler h) {
+        new VideosDelTask(paths, mResolver, h).execute();
+    }
+
+    public void setVideosLockType(String[] paths, boolean lock, Handler h) {
+        new VideosSetLockTask(paths, lock, mResolver, h).execute();
     }
 
     private class ImageSaveTask extends AsyncTask <Void, Void, Uri> {
-        private String path;
-        private long date;
-        private Location loc;
-        private int width, height;
-        private int orientation;
-        private ContentResolver resolver;
+        private String          mPath;
+        private long            mDate;
+        private Location        mLoc;
+        private int             mWidth;
+        private int             mHeight;
+        private int             mOrientation;
+        private ContentResolver mResolver;
 
         public ImageSaveTask(String path, long date, Location loc, int width, int height,
                              int orientation, ContentResolver resolver) {
-            this.path = path;
-            this.date = date;
-            this.loc = loc;
-            this.width = width;
-            this.height = height;
-            this.orientation = orientation;
-            this.resolver = resolver;
+            mPath        = path;
+            mDate        = date;
+            mLoc         = loc;
+            mWidth       = width;
+            mHeight      = height;
+            mOrientation = orientation;
+            mResolver    = resolver;
         }
 
         @Override
@@ -103,31 +114,31 @@ public class MediaManager {
 
         @Override
         protected Uri doInBackground(Void... v) {
-            File file = new File(path);
+            File file = new File(mPath);
             long dateModifiedSeconds = TimeUnit.MILLISECONDS.toSeconds(file.lastModified());
             long fileLength = file.length();
 
             ContentValues values = new ContentValues();
 //          values.put(ImageColumns.TITLE, title);
 //          values.put(ImageColumns.DISPLAY_NAME, title + JPEG_POSTFIX);
-            values.put(ImageColumns.DATE_TAKEN, date);
-            values.put(ImageColumns.MIME_TYPE, "image/jpeg");
+            values.put(ImageColumns.DATE_TAKEN, mDate);
+            values.put(ImageColumns.MIME_TYPE , "image/jpeg");
             values.put(ImageColumns.DATE_MODIFIED, dateModifiedSeconds);
             // Clockwise rotation in degrees. 0, 90, 180, or 270.
-            values.put(ImageColumns.ORIENTATION, orientation);
-            values.put(ImageColumns.DATA, path);
-            values.put(ImageColumns.SIZE, fileLength);
-            values.put(MediaColumns.WIDTH, width);
-            values.put(MediaColumns.HEIGHT, height);
+            values.put(ImageColumns.ORIENTATION, mOrientation);
+            values.put(ImageColumns.DATA  , mPath);
+            values.put(ImageColumns.SIZE  , fileLength);
+            values.put(MediaColumns.WIDTH , mWidth);
+            values.put(MediaColumns.HEIGHT, mHeight);
 
-            if (loc != null) {
-                values.put(ImageColumns.LATITUDE, loc.getLatitude());
-                values.put(ImageColumns.LONGITUDE, loc.getLongitude());
+            if (mLoc != null) {
+                values.put(ImageColumns.LATITUDE , mLoc.getLatitude ());
+                values.put(ImageColumns.LONGITUDE, mLoc.getLongitude());
             }
 
             Uri uri = null;
             try {
-                uri = resolver.insert(Images.Media.EXTERNAL_CONTENT_URI, values);
+                uri = mResolver.insert(Images.Media.EXTERNAL_CONTENT_URI, values);
             } catch (Throwable th)  {
                 // This can happen when the external volume is already mounted, but
                 // MediaScanner has not notify MediaProvider to add that volume.
@@ -144,45 +155,23 @@ public class MediaManager {
         }
     }
 
-    private class ImageDelTask extends AsyncTask <Void, Void, Uri> {
-        private String path;
-        private ContentResolver resolver;
-
-        public ImageDelTask(String path, ContentResolver r) {
-            this.path     = path;
-            this.resolver = r;
-        }
-
-        @Override
-        protected Uri doInBackground(Void... v) {
-            String params[] = new String[] { this.path };
-            this.resolver.delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, MediaStore.Images.Media.DATA + " LIKE ?", params);
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Uri uri) {
-            // todo...
-        }
-    }
-
     private class VideoSaveTask extends AsyncTask <Void, Void, Uri> {
-        private String  path;
-        private long    date;
-        private int     width;
-        private int     height;
-        private long    duration;
-        private boolean impact;
-        private ContentResolver resolver;
+        private String  mPath;
+        private long    mDate;
+        private int     mWidth;
+        private int     mHeight;
+        private long    mDuration;
+        private boolean mImpact;
+        private ContentResolver mResolver;
 
         public VideoSaveTask(String path, long date, int w, int h, long duration, boolean impact, ContentResolver r) {
-            this.path     = path;
-            this.date     = date;
-            this.width    = w;
-            this.height   = h;
-            this.duration = duration;
-            this.impact   = impact;
-            this.resolver = r;
+            mPath     = path;
+            mDate     = date;
+            mWidth    = w;
+            mHeight   = h;
+            mDuration = duration;
+            mImpact   = impact;
+            mResolver = r;
         }
 
         @Override
@@ -190,24 +179,22 @@ public class MediaManager {
             ContentValues values = null;
             Uri           uri    = null;
             try {
-                if (impact) {
-                    String pathold = path;
-                    String pathnew = path.replace("DVR_Video", "DVR_Impact");
-                    File fileold = new File(pathold);
-                    File filenew = new File(pathnew);
-                    fileold.renameTo(filenew);
-                    path = pathnew;
+                if (mImpact) {
+                    String pathold = mPath;
+                    String pathnew = mPath.replace("DVR_Video", "DVR_Impact");
+                    new File(pathold).renameTo(new File(pathnew));
+                    mPath = pathnew;
                 }
 
                 values = new ContentValues();
                 values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4");
-                values.put(MediaStore.Video.Media.DATA, path);
-                values.put(MediaStore.Video.Media.DATE_TAKEN, date);
-                values.put(MediaStore.Video.Media.WIDTH, width);
-                values.put(MediaStore.Video.Media.HEIGHT, height);
-                values.put(MediaStore.Video.Media.DURATION, duration);
-                uri = resolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
-                resolver.update(uri, values, null, null);
+                values.put(MediaStore.Video.Media.DATA, mPath);
+                values.put(MediaStore.Video.Media.DATE_TAKEN, mDate);
+                values.put(MediaStore.Video.Media.WIDTH   , mWidth );
+                values.put(MediaStore.Video.Media.HEIGHT  , mHeight);
+                values.put(MediaStore.Video.Media.DURATION, mDuration);
+                uri = mResolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
+                mResolver.update(uri, values, null, null);
             } catch (Exception e) {
                 // We failed to insert into the database. This can happen if
                 // the SD card is unmounted.
@@ -225,60 +212,102 @@ public class MediaManager {
         }
     }
 
-    private class VideoDelTask extends AsyncTask <Void, Void, Uri> {
-        private String path;
-        private ContentResolver resolver;
+    private class ImagesDelTask extends AsyncTask <Void, Void, Uri> {
+        private String[]        mPaths;
+        private ContentResolver mResolver;
+        private Handler         mHandler;
 
-        public VideoDelTask(String path, ContentResolver r) {
-            this.path     = path;
-            this.resolver = r;
+        public ImagesDelTask(String[] paths, ContentResolver r, Handler h) {
+            mPaths    = paths;
+            mResolver = r;
+            mHandler  = h;
         }
 
         @Override
         protected Uri doInBackground(Void... v) {
-            String params[] = new String[] { this.path };
-            this.resolver.delete(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, MediaStore.Video.Media.DATA + " LIKE ?", params);
+            for (String path : mPaths) {
+                String params[] = new String[] { path };
+                mResolver.delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, MediaStore.Images.Media.DATA + " LIKE ?", params);
+            }
             return null;
         }
 
         @Override
         protected void onPostExecute(Uri uri) {
-            // todo...
+            if (mHandler != null) {
+                mHandler.sendEmptyMessage(BrowserActivity.MSG_DELETE_IMAGES_DONE);
+            }
         }
     }
 
-    private class VideoSetLockTask extends AsyncTask <Void, Void, Uri> {
-        private String  path;
-        private boolean lock;
-        private ContentResolver resolver;
+    private class VideosDelTask extends AsyncTask <Void, Void, Uri> {
+        private String[]        mPaths;
+        private ContentResolver mResolver;
+        private Handler         mHandler;
 
-        public VideoSetLockTask(String path, boolean lock, ContentResolver r) {
-            this.path     = path;
-            this.lock     = lock;
-            this.resolver = r;
+        public VideosDelTask(String[] paths, ContentResolver r, Handler h) {
+            mPaths    = paths;
+            mResolver = r;
+            mHandler  = h;
         }
 
         @Override
         protected Uri doInBackground(Void... v) {
-            if (this.lock == this.path.startsWith(SdcardManager.DIRECTORY_IMPACT)) return null;
-
-            String newpath;
-            if (this.lock) {
-                newpath = this.path.replace(SdcardManager.DIRECTORY_VIDEO, SdcardManager.DIRECTORY_IMPACT);
-            } else {
-                newpath = this.path.replace(SdcardManager.DIRECTORY_IMPACT, SdcardManager.DIRECTORY_VIDEO);
+            for (String path : mPaths) {
+                String params[] = new String[] { path };
+                mResolver.delete(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, MediaStore.Video.Media.DATA + " LIKE ?", params);
             }
-            String params[] = new String[] { this.path };
-            ContentValues values = new ContentValues();
-            values.put(MediaStore.Video.Media.DATA, newpath);
-            this.resolver.update(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values, MediaStore.Video.Media.DATA + " LIKE ?", params);
-            (new File(this.path)).renameTo(new File(newpath));
             return null;
         }
 
         @Override
         protected void onPostExecute(Uri uri) {
-            // todo...
+            if (mHandler != null) {
+                mHandler.sendEmptyMessage(BrowserActivity.MSG_DELETE_VIDEOS_DONE);
+            }
+        }
+    }
+
+    private class VideosSetLockTask extends AsyncTask <Void, Void, Uri> {
+        private String[]        mPaths;
+        private boolean         mLock;
+        private ContentResolver mResolver;
+        private Handler         mHandler;
+
+        public VideosSetLockTask(String[] paths, boolean lock, ContentResolver r, Handler h) {
+            mPaths    = paths;
+            mLock     = lock;
+            mResolver = r;
+            mHandler  = h;
+        }
+
+        @Override
+        protected Uri doInBackground(Void... v) {
+            for (String path : mPaths) {
+                if (mLock == path.startsWith(SdcardManager.DIRECTORY_IMPACT)) {
+                    continue;
+                }
+
+                String newpath;
+                if (mLock) {
+                    newpath = path.replace(SdcardManager.DIRECTORY_VIDEO, SdcardManager.DIRECTORY_IMPACT);
+                } else {
+                    newpath = path.replace(SdcardManager.DIRECTORY_IMPACT, SdcardManager.DIRECTORY_VIDEO);
+                }
+                String params[] = new String[] { path };
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Video.Media.DATA, newpath);
+                mResolver.update(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values, MediaStore.Video.Media.DATA + " LIKE ?", params);
+                (new File(path)).renameTo(new File(newpath));
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Uri uri) {
+            if (mHandler != null) {
+                mHandler.sendEmptyMessage(BrowserActivity.MSG_SET_LOCK_TYPE_DONE);
+            }
         }
     }
 }
