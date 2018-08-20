@@ -177,6 +177,7 @@ public class ffRecorder {
         try {
             if (mRecordEn [encidx] == true) {
                 mRecorders[encidx].stop();
+                mRecorders[encidx].release();
                 mRecCamIdx[encidx].lock();
                 mRecordEn [encidx] = false;
             }
