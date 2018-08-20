@@ -55,6 +55,10 @@ public class RecordService extends Service
     public void onCreate() {
         Log.d(TAG, "onCreate");
 
+        // start record service
+        Intent i = new Intent(this, DiskRecycler.class);
+        startService(i);
+
         Settings.init(this);
         mCamSwitchState = Settings.get(Settings.KEY_CAMERA_SWITCH_STATE_VALUE, Settings.DEF_CAMERA_SWITCH_STATE_VALUE);
         mRecordDuration = Settings.get(Settings.KEY_RECORD_DURATION          , Settings.DEF_RECORD_DURATION          );
@@ -206,6 +210,10 @@ public class RecordService extends Service
 
         // for take photo shutter
         mShutterMP.release();
+
+        // stop record service
+        Intent i = new Intent(this, DiskRecycler.class);
+        stopService(i);
     }
 
     @Override

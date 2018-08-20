@@ -59,10 +59,6 @@ public class ffRecorder {
         mProfiles[0] = CamcorderProfile.get(0, CamcorderProfile.QUALITY_720P);
         mProfiles[1] = CamcorderProfile.get(0, CamcorderProfile.QUALITY_480P);
         mProfiles[2] = CamcorderProfile.get(0, CamcorderProfile.QUALITY_480P);
-
-        for (int i=0; i<mRecorders.length; i++) {
-            mRecorders[i] = new MediaRecorder();
-        }
     }
 
     public void release() {
@@ -99,6 +95,7 @@ public class ffRecorder {
             params.setPictureSize(w, h);
             mCameraDevs[camidx].stopPreview();
             mCameraDevs[camidx].setParameters(params);
+            mCameraDevs[camidx].startPreview();
         } catch (Exception e) { e.printStackTrace(); }
     }
 
@@ -132,6 +129,7 @@ public class ffRecorder {
         try {
             if (mRecordEn [encidx] == false) {
                 mRecCamIdx[encidx].unlock();
+                mRecorders[encidx] = new MediaRecorder();
                 mRecorders[encidx].setCamera(mRecCamIdx[encidx]);
                 mRecorders[encidx].setAudioSource(mMicMute ? MediaRecorder.AudioSource.REMOTE_SUBMIX : MediaRecorder.AudioSource.MIC);
                 mRecorders[encidx].setVideoSource(MediaRecorder.VideoSource.CAMERA);
@@ -143,6 +141,7 @@ public class ffRecorder {
             } else {
                 if (true) {
                     mRecorders[encidx].stop();
+                    mRecorders[encidx].release();
                     mRecCamIdx[encidx].lock();
                     mRecCamIdx[encidx].unlock();
                     mRecorders[encidx].setCamera(mRecCamIdx[encidx]);
