@@ -1,5 +1,6 @@
 package com.apical.dvr;
 
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.ComponentName;
@@ -100,9 +101,13 @@ public class FloatWindow {
         mDvrButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent i = new Intent(mContext, MainActivity.class);
-                i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                mContext.startActivity(i);
+                Intent intent = new Intent(context, MainActivity.class);
+                PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
+                try {
+                    pendingIntent.send();
+                } catch (PendingIntent.CanceledException e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
